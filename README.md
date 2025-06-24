@@ -1,5 +1,7 @@
 # LIFX-Claude Frontend
 
+<!-- Force rebuild: 2025-06-24 -->
+
 A Vue.js client-side application for controlling LIFX smart lights through Claude AI, showcasing Model Context Protocol (MCP) integration.
 
 ## 🚀 Features
