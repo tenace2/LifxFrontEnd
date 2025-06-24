@@ -32,10 +32,11 @@ build/
 ehthumbs.db
 Thumbs.db
 
-# API Keys (just in case)
+# API Keys (just in case) - be specific to avoid matching component names
 *api-key*
 *secret*
-*token*
+*.token
+.token
 
 # Logs
 logs/
