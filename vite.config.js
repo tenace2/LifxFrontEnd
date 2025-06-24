@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 
 export default defineConfig({
-	base: '/LifxFrontEnd/', // GitHub repository name
+	base: './', // Use relative paths instead of absolute
 	plugins: [
 		vue({
 			template: { transformAssetUrls },
