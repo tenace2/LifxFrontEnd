@@ -41,6 +41,16 @@ jobs:
           NODE_ENV: production
           VITE_BACKEND_URL: https://your-app.railway.app
 
+      - name: Add .nojekyll file
+        run: touch ./dist/.nojekyll
+
+      - name: Debug - List built files
+        run: |
+          echo "Contents of dist directory:"
+          ls -la ./dist/
+          echo "Contents of dist/index.html:"
+          cat ./dist/index.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
