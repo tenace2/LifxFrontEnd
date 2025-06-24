@@ -23,6 +23,7 @@ A Vue.js client-side application for controlling LIFX smart lights through Claud
 ## 🏗️ Architecture
 
 This is the **client-side** portion of a split architecture:
+
 - **Frontend**: Vue.js SPA hosted on GitHub Pages (this repository)
 - **Backend**: Node.js server hosted on Railway (separate repository)
 
@@ -37,17 +38,20 @@ Before using this application, you'll need:
 ## 🚀 Development Setup
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/tenace2/LifxFrontEnd.git
    cd LifxFrontEnd
    ```
 
 2. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 3. **Start development server**:
+
    ```bash
    npm run dev
    ```
@@ -143,6 +147,7 @@ src/
 ## 🧪 Development Notes
 
 This is an **educational demo** showcasing:
+
 - Model Context Protocol (MCP) integration
 - Client-server architecture patterns
 - Vue.js 3 Composition API best practices
@@ -174,5 +179,6 @@ This is a demonstration application. Users are responsible for their own API usa
 ## 📞 Support
 
 For issues and questions:
+
 - Check the [Issues](https://github.com/tenace2/LifxFrontEnd/issues) page
 - Review the [client_copilot_instructions.md](client_copilot_instructions.md) for detailed specifications
