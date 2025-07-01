@@ -13,6 +13,7 @@
 					label="Safety Guardrails"
 					color="primary"
 					left-label
+					@update:model-value="onSystemPromptToggle"
 				/>
 				<q-slider
 					v-model="maxTokens"
@@ -23,6 +24,7 @@
 					:label-value="`Max Tokens: ${maxTokens}`"
 					color="primary"
 					class="col"
+					@update:model-value="onMaxTokensChange"
 				/>
 			</div>
 
@@ -197,7 +199,7 @@
 </template>
 
 <script setup>
-	import { ref, computed, watch, nextTick } from 'vue';
+	import { ref, computed, watch, nextTick, onMounted } from 'vue';
 	import { useQuasar } from 'quasar';
 	import { useApiKeys } from '../composables/useApiKeys';
 	import { useBackendApi } from '../composables/useBackendApi';
@@ -217,6 +219,104 @@
 	const scrollArea = ref(null);
 	const messageInput = ref(null);
 	const chatHeight = ref('400px');
+
+	// ===========================================
+	// CONSOLE LOGGING FOR EDUCATIONAL PURPOSES
+	// ===========================================
+
+	// Watch System Prompt toggle changes
+	watch(systemPromptEnabled, (newValue, oldValue) => {
+		console.log('🔧 System Prompt (Safety Guardrails) Toggle CHANGED:', {
+			from: oldValue,
+			to: newValue,
+			description: newValue
+				? 'Safety guardrails ENABLED'
+				: 'Safety guardrails DISABLED',
+			impact: newValue
+				? 'Claude will have focused behavior constraints'
+				: 'Claude may respond more broadly',
+			recommendation: newValue
+				? 'Recommended for production use'
+				: 'Use carefully - may allow off-topic responses',
+		});
+
+		// Additional educational logging
+		if (newValue) {
+			console.log('✅ Safety Guardrails ENABLED - Benefits:');
+			console.log('   • Claude will stay more focused on intended use case');
+			console.log('   • Better response quality and relevance');
+			console.log('   • Consistent behavior across sessions');
+			console.log('   • Recommended for production deployments');
+		} else {
+			console.log('❌ Safety Guardrails DISABLED - Effects:');
+			console.log('   • Claude may respond to any topic');
+			console.log('   • More flexible but less predictable');
+			console.log('   • May give unexpected responses');
+			console.log('   • Use only for testing/experimentation');
+		}
+	});
+
+	// Watch Max Tokens changes
+	watch(maxTokens, (newValue, oldValue) => {
+		console.log('🎛️ Max Tokens Setting CHANGED:', {
+			from: oldValue,
+			to: newValue,
+			impact: `Claude responses limited to ${newValue} tokens`,
+			costImpact: `Estimated cost: $${((newValue / 1000) * 0.008).toFixed(
+				4
+			)} per request (output only)`,
+			recommendation:
+				newValue < 500
+					? 'Short responses'
+					: newValue < 1500
+					? 'Balanced responses'
+					: 'Detailed responses',
+		});
+
+		// Educational logging about token implications
+		if (newValue < 500) {
+			console.log('⚡ Short Response Mode (< 500 tokens):');
+			console.log('   • Quick, concise answers');
+			console.log('   • Lower cost per request');
+			console.log('   • May truncate complex responses');
+		} else if (newValue < 1500) {
+			console.log('⚖️ Balanced Response Mode (500-1500 tokens):');
+			console.log('   • Good balance of detail and cost');
+			console.log('   • Suitable for most interactions');
+			console.log('   • Recommended for general use');
+		} else {
+			console.log('📝 Detailed Response Mode (> 1500 tokens):');
+			console.log('   • Comprehensive, detailed answers');
+			console.log('   • Higher cost per request');
+			console.log('   • Best for complex explanations');
+		}
+	});
+
+	// Watch current message for analysis
+	watch(currentMessage, (newMessage) => {
+		if (newMessage && newMessage.length > 3) {
+			console.log('💬 Message Input Analysis:', {
+				message: newMessage,
+				length: newMessage.length,
+				estimatedTokens: Math.ceil(newMessage.length / 4),
+				containsLightKeywords: [
+					'light',
+					'lamp',
+					'bulb',
+					'brightness',
+					'color',
+					'dimmer',
+					'switch',
+				].some((keyword) =>
+					newMessage.toLowerCase().includes(keyword.toLowerCase())
+				),
+			});
+		}
+	});
+
+	// ===========================================
+	// EXISTING CODE CONTINUES
+	// ===========================================
 
 	// Quick action suggestions
 	const quickActions = [
@@ -302,11 +402,44 @@
 		{ deep: true }
 	);
 
+	// ===========================================
+	// EVENT HANDLERS FOR UI INTERACTIONS
+	// ===========================================
+
+	const onSystemPromptToggle = (newValue) => {
+		console.log('🔧 System Prompt Toggle CLICKED:', {
+			newValue: newValue,
+			userAction: 'Manual toggle click',
+			timestamp: new Date().toLocaleString(),
+			component: 'ClaudeChat.vue - Safety Guardrails Toggle',
+		});
+	};
+
+	const onMaxTokensChange = (newValue) => {
+		console.log('🎛️ Max Tokens Slider MOVED:', {
+			newValue: newValue,
+			userAction: 'Manual slider adjustment',
+			timestamp: new Date().toLocaleString(),
+			component: 'ClaudeChat.vue - Max Tokens Slider',
+		});
+	};
+
+	// ===========================================
+	// MESSAGE HANDLING
+	// ===========================================
+
 	const sendMessage = async () => {
 		if (!canSendMessage.value || !currentMessage.value.trim()) return;
 
 		const messageText = currentMessage.value.trim();
 		currentMessage.value = '';
+
+		console.log('👤 User message being sent:', {
+			message: messageText,
+			length: messageText.length,
+			estimatedTokens: Math.ceil(messageText.length / 4),
+			timestamp: new Date().toLocaleString(),
+		});
 
 		// Add user message
 		const userMessage = {
@@ -331,6 +464,23 @@
 		isTyping.value = true;
 
 		try {
+			console.log('🚀 Sending Claude request with payload:');
+			console.log({
+				message: messageText,
+				claudeApiKey: '[REDACTED]',
+				lifxApiKey: '[REDACTED]',
+				systemPromptEnabled: systemPromptEnabled.value,
+				maxTokens: maxTokens.value,
+				conversationHistoryLength: messages.value.slice(-10).length,
+			});
+
+			console.log('🎛️ System Prompt Settings:', {
+				enabled: systemPromptEnabled.value,
+				impact: systemPromptEnabled.value
+					? 'Claude will have safety guardrails'
+					: 'Claude operates without specific guardrails',
+			});
+
 			const response = await makeApiRequest('/api/claude', {
 				message: messageText,
 				claudeApiKey: claudeApiKey.value,
@@ -340,9 +490,22 @@
 				conversationHistory: messages.value.slice(-10), // Send last 10 messages for context
 			});
 
+			console.log('✅ Claude response received:', response.data);
+			console.log('🔍 Raw response structure:', {
+				success: response.data.success,
+				responseType: typeof response.data.response,
+				responseLength: response.data.response?.length || 0,
+				hasActions: !!(
+					response.data.actions && response.data.actions.length > 0
+				),
+				usage: response.data.usage || 'No usage data',
+			});
+
 			updateUsageFromResponse(response);
 
 			if (response.data.success) {
+				console.log('📝 Extracted Claude content:', response.data.response);
+
 				const claudeMessage = {
 					role: 'assistant',
 					content: response.data.response,
@@ -350,6 +513,13 @@
 					actions: response.data.actions || [],
 				};
 				messages.value.push(claudeMessage);
+
+				console.log('💬 Message added to chat:', {
+					role: claudeMessage.role,
+					contentLength: claudeMessage.content.length,
+					actionsCount: claudeMessage.actions.length,
+					timestamp: new Date(claudeMessage.timestamp).toLocaleString(),
+				});
 			} else {
 				throw new Error(response.data.error || 'Claude request failed');
 			}
@@ -418,6 +588,30 @@
 			clearChat();
 		}
 	};
+
+	// ===========================================
+	// COMPONENT LIFECYCLE
+	// ===========================================
+
+	// Log initial settings when component mounts
+	onMounted(() => {
+		console.log('🎭 ClaudeChat Component MOUNTED');
+		console.log('📊 Initial Settings:', {
+			systemPromptEnabled: systemPromptEnabled.value,
+			maxTokens: maxTokens.value,
+			claudeApiKeyValid: isClaudeKeyValid.value,
+			lifxApiKeyValid: isLifxKeyValid.value,
+			backendStatus: backendStatus.value,
+			canSendRequest: canSendRequest.value,
+		});
+
+		console.log('🎓 Educational Logging Active:');
+		console.log('   • System Prompt toggle changes will be logged');
+		console.log('   • Max Tokens slider changes will be logged');
+		console.log('   • Message input analysis will be logged');
+		console.log('   • Claude API requests/responses will be logged');
+		console.log('   • All logs visible in browser console (F12)');
+	});
 
 	// Add keyboard listener
 	document.addEventListener('keydown', handleKeydown);

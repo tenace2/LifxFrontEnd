@@ -81,6 +81,7 @@
 					<div class="q-mb-md">
 						<div class="text-caption q-mb-xs">
 							Brightness: {{ Math.round(brightness * 100) }}%
+							<small style="color: #666">({{ brightness.toFixed(2) }})</small>
 						</div>
 						<q-slider
 							v-model="brightness"
@@ -143,26 +144,6 @@
 						</q-input>
 					</div>
 				</div>
-
-				<!-- Quick Actions -->
-				<div class="row q-gutter-sm">
-					<q-btn
-						color="positive"
-						label="All On"
-						icon="lightbulb"
-						@click="allLightsAction('on')"
-						:disable="lights.length === 0 || !canSendRequest()"
-						class="col"
-					/>
-					<q-btn
-						color="negative"
-						label="All Off"
-						icon="lightbulb_outline"
-						@click="allLightsAction('off')"
-						:disable="lights.length === 0 || !canSendRequest()"
-						class="col"
-					/>
-				</div>
 			</div>
 
 			<!-- Setup Required Message -->
@@ -223,14 +204,31 @@
 
 		discovering.value = true;
 		try {
-			const response = await makeApiRequest('/api/lifx/lights', {
+			const response = await makeApiRequest('/api/lifx/list_lights', {
 				lifxApiKey: lifxApiKey.value,
 			});
 
 			updateUsageFromResponse(response);
 
 			if (response.data.success) {
-				lights.value = response.data.lights || [];
+				// Handle MCP response structure: result.content[0].text contains JSON string
+				let lightsData = [];
+
+				if (
+					response.data.result &&
+					response.data.result.content &&
+					response.data.result.content[0]
+				) {
+					// Parse the JSON string from MCP response
+					const lightsJsonString = response.data.result.content[0].text;
+					const parsedData = JSON.parse(lightsJsonString);
+					lightsData = parsedData.lights || [];
+				} else if (response.data.lights) {
+					// Fallback: direct lights array (if backend format changes)
+					lightsData = response.data.lights;
+				}
+
+				lights.value = lightsData;
 				if (lights.value.length > 0 && !selectedLight.value) {
 					selectedLight.value = lights.value[0];
 				}
@@ -262,9 +260,9 @@
 
 		try {
 			const newPower = light.power === 'on' ? 'off' : 'on';
-			const response = await makeApiRequest('/api/lifx/power', {
+			const response = await makeApiRequest('/api/lifx/set_light_state', {
 				lifxApiKey: lifxApiKey.value,
-				lightId: light.id,
+				selector: `id:${light.id}`,
 				power: newPower,
 			});
 
@@ -293,9 +291,9 @@
 		if (!selectedLight.value || !canSendRequest()) return;
 
 		try {
-			const response = await makeApiRequest('/api/lifx/brightness', {
+			const response = await makeApiRequest('/api/lifx/set_brightness', {
 				lifxApiKey: lifxApiKey.value,
-				lightId: selectedLight.value.id,
+				selector: `id:${selectedLight.value.id}`,
 				brightness: brightness.value,
 			});
 
@@ -324,12 +322,10 @@
 		if (!selectedLight.value || !canSendRequest()) return;
 
 		try {
-			const response = await makeApiRequest('/api/lifx/color', {
+			const response = await makeApiRequest('/api/lifx/set_color', {
 				lifxApiKey: lifxApiKey.value,
-				lightId: selectedLight.value.id,
-				hue: preset.hue / 360, // LIFX expects 0-1
-				saturation: preset.saturation,
-				brightness: brightness.value,
+				selector: `id:${selectedLight.value.id}`,
+				color: preset.name.toLowerCase(), // Use simple color name like "red", "blue", etc.
 			});
 
 			updateUsageFromResponse(response);
@@ -355,7 +351,7 @@
 	const setCustomColor = async () => {
 		if (!selectedLight.value || !customColor.value || !canSendRequest()) return;
 
-		// Convert hex to HSB
+		// Validate hex format
 		const hex = customColor.value.replace('#', '');
 		if (hex.length !== 6) {
 			$q.notify({
@@ -367,11 +363,10 @@
 		}
 
 		try {
-			const response = await makeApiRequest('/api/lifx/color', {
+			const response = await makeApiRequest('/api/lifx/set_color', {
 				lifxApiKey: lifxApiKey.value,
-				lightId: selectedLight.value.id,
-				color: customColor.value,
-				brightness: brightness.value,
+				selector: `id:${selectedLight.value.id}`,
+				color: customColor.value, // Send hex color directly
 			});
 
 			updateUsageFromResponse(response);
@@ -394,38 +389,133 @@
 		}
 	};
 
-	const allLightsAction = async (action) => {
-		if (lights.value.length === 0 || !canSendRequest()) return;
+	// Refresh light status - called after Claude actions to sync UI
+	const refreshLightStatus = async (showNotification = false) => {
+		console.log('🔄 refreshLightStatus called!', {
+			isLifxKeyValid: isLifxKeyValid.value,
+			lightsCount: lights.value.length,
+			selectedLightId: selectedLight.value?.id,
+		});
+
+		if (!isLifxKeyValid.value || lights.value.length === 0) {
+			console.log('❌ Early return from refreshLightStatus:', {
+				isLifxKeyValid: isLifxKeyValid.value,
+				lightsCount: lights.value.length,
+			});
+			return;
+		}
+
+		console.log('🔄 Refreshing light status after Claude action...');
 
 		try {
-			const response = await makeApiRequest('/api/lifx/all', {
+			const response = await makeApiRequest('/api/lifx/list_lights', {
 				lifxApiKey: lifxApiKey.value,
-				action: action,
 			});
 
-			updateUsageFromResponse(response);
+			console.log('📡 Light status response:', response.data);
 
 			if (response.data.success) {
-				// Update local state
-				lights.value.forEach((light) => {
-					light.power = action;
-				});
-				$q.notify({
-					type: 'positive',
-					message: `All lights turned ${action}`,
-					timeout: 2000,
-				});
+				// Handle MCP response structure
+				let lightsData = [];
+
+				if (
+					response.data.result &&
+					response.data.result.content &&
+					response.data.result.content[0]
+				) {
+					const lightsJsonString = response.data.result.content[0].text;
+					const parsedData = JSON.parse(lightsJsonString);
+					lightsData = parsedData.lights || [];
+				} else if (response.data.lights) {
+					lightsData = response.data.lights;
+				}
+
+				console.log('💡 Updated lights data:', lightsData);
+
+				// Debug: Log the raw structure of the first light
+				if (lightsData.length > 0) {
+					console.log('🔍 First light raw data:', {
+						fullLight: lightsData[0],
+						availableProperties: Object.keys(lightsData[0]),
+						brightness: lightsData[0].brightness,
+						power: lightsData[0].power,
+						color: lightsData[0].color,
+						colorProperties: lightsData[0].color
+							? Object.keys(lightsData[0].color)
+							: 'no color object',
+					});
+				}
+
+				// Update lights array
+				lights.value = lightsData;
+
+				// Update selected light and sync brightness slider
+				if (selectedLight.value && lightsData.length > 0) {
+					const updatedLight = lightsData.find(
+						(light) => light.id === selectedLight.value.id
+					);
+					if (updatedLight) {
+						// Extract brightness from multiple possible locations
+						const extractedBrightness =
+							updatedLight.brightness ||
+							updatedLight.color?.brightness ||
+							updatedLight.color?.b ||
+							1; // fallback to 100%
+
+						console.log('🎯 Found selected light:', {
+							lightId: updatedLight.id,
+							lightLabel: updatedLight.label,
+							oldBrightness: selectedLight.value.brightness,
+							newBrightness: updatedLight.brightness,
+							colorBrightness: updatedLight.color?.brightness,
+							colorB: updatedLight.color?.b,
+							extractedBrightness: extractedBrightness,
+							oldSliderValue: brightness.value,
+							updatedLightRaw: updatedLight,
+						});
+
+						selectedLight.value = updatedLight;
+						const newBrightnessValue = extractedBrightness;
+
+						// Force Vue reactivity update
+						brightness.value = newBrightnessValue;
+
+						// Additional force update - trigger reactivity
+						setTimeout(() => {
+							brightness.value = newBrightnessValue;
+						}, 10);
+
+						console.log('✅ Synced brightness slider:', {
+							newSliderValue: brightness.value,
+							percentage: Math.round(brightness.value * 100) + '%',
+							brightnessBefore: brightness.value,
+							brightnessAfter: newBrightnessValue,
+							sliderReactiveUpdate: brightness.value === newBrightnessValue,
+						});
+					} else {
+						console.log('⚠️ Selected light not found in updated data');
+					}
+				} else {
+					console.log('⚠️ No selected light or no lights data');
+				}
+
+				if (showNotification) {
+					$q.notify({
+						type: 'info',
+						message: 'Light status refreshed',
+						timeout: 1500,
+					});
+				}
 			} else {
-				throw new Error(
-					response.data.error || `Failed to turn all lights ${action}`
-				);
+				console.warn('⚠️ Failed to refresh light status:', response.data.error);
 			}
 		} catch (error) {
-			$q.notify({
-				type: 'negative',
-				message: error.message || `Failed to turn all lights ${action}`,
-				timeout: 3000,
-			});
+			console.error('❌ Error refreshing light status:', error);
 		}
 	};
+
+	// Expose the refresh function for external components
+	defineExpose({
+		refreshLightStatus,
+	});
 </script>

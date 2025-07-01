@@ -42,20 +42,21 @@
 					</template>
 				</q-banner>
 
-				<!-- Session Usage Display -->
-				<UsageIndicator class="q-mb-md" />
+				<!-- Server Logs & Debug Info -->
+				<ServerLogs class="q-mb-md" />
 
 				<!-- Main Content Grid -->
 				<div class="row q-gutter-md">
-					<!-- Left Column: API Keys & Light Controls -->
+					<!-- Left Column: API Keys, Session Management & Light Controls -->
 					<div class="col-12 col-md-4">
 						<TokenManager class="q-mb-md" />
-						<LightControls />
+						<SessionManager class="q-mb-md" />
+						<LightControls ref="lightControlsRef" />
 					</div>
 
 					<!-- Right Column: Claude Chat -->
 					<div class="col-12 col-md-8">
-						<ClaudeChat />
+						<ClaudeChat :light-controls-ref="lightControlsRef" />
 					</div>
 				</div>
 			</q-page>
@@ -113,12 +114,14 @@
 	import TokenManager from './components/TokenManager.vue';
 	import ClaudeChat from './components/ClaudeChat.vue';
 	import LightControls from './components/LightControls.vue';
-	import UsageIndicator from './components/UsageIndicator.vue';
+	import ServerLogs from './components/ServerLogs.vue';
+	import SessionManager from './components/SessionManager.vue';
 	import { useBackendApi } from './composables/useBackendApi';
 
 	const $q = useQuasar();
 	const { backendStatus, checkBackendHealth } = useBackendApi();
 	const showInfoDialog = ref(false);
+	const lightControlsRef = ref(null);
 
 	// Backend status computed properties
 	const backendStatusColor = computed(() => {
@@ -162,11 +165,6 @@
 
 	onMounted(() => {
 		checkBackendHealth();
-
-		// Check backend health every 30 seconds
-		setInterval(() => {
-			checkBackendHealth();
-		}, 30000);
 	});
 </script>
 
