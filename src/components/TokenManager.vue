@@ -638,11 +638,18 @@
 		console.log('✅ LIFX results cleared');
 	};
 
-	// Check backend health when component mounts
+	// Perform initial health check on mount only if not already connected
 	onMounted(() => {
 		console.log('🏗️ TokenManager component mounted');
-		console.log('🔗 Checking backend health on mount...');
-		checkBackendHealth();
+		if (
+			backendStatus.value === 'checking' ||
+			backendStatus.value === 'disconnected'
+		) {
+			console.log('🔗 Performing initial backend health check...');
+			checkBackendHealth();
+		} else {
+			console.log('🔗 Backend status already known:', backendStatus.value);
+		}
 	});
 
 	// Watch lifxTestResults for debugging

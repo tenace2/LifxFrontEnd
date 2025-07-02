@@ -6,8 +6,8 @@
 				Claude AI Chat
 			</div>
 
-			<!-- System Prompt Controls -->
-			<div class="row q-gutter-md q-mb-md">
+			<!-- Safety Guardrails -->
+			<div class="q-mb-md">
 				<q-toggle
 					v-model="systemPromptEnabled"
 					label="Safety Guardrails"
@@ -15,30 +15,53 @@
 					left-label
 					@update:model-value="onSystemPromptToggle"
 				/>
-				<q-slider
-					v-model="maxTokens"
-					:min="100"
-					:max="4000"
-					:step="100"
-					label
-					:label-value="`Max Tokens: ${maxTokens}`"
-					color="primary"
-					class="col"
-					@update:model-value="onMaxTokensChange"
-				/>
+				<div class="text-caption text-grey-6 q-mt-xs q-ml-lg">
+					Keep Claude focused on light control tasks
+				</div>
 			</div>
 
-			<!-- Token Usage Estimate -->
-			<div class="row q-gutter-md q-mb-md">
-				<div class="col-auto">
-					<q-chip color="info" text-color="white" size="sm">
-						Est. Cost: ${{ estimatedCost.toFixed(4) }}
-					</q-chip>
-				</div>
-				<div class="col-auto">
-					<q-chip color="primary" text-color="white" size="sm">
-						Tokens: ~{{ estimatedTokens }}
-					</q-chip>
+			<!-- Token Configuration & Statistics -->
+			<div class="q-mb-md">
+				<div class="text-subtitle2 q-mb-sm">Token Settings</div>
+				<div class="row q-gutter-md items-start">
+					<div class="col-auto">
+						<q-input
+							v-model.number="maxTokens"
+							label="Max Tokens"
+							type="number"
+							:min="100"
+							:max="4000"
+							:step="100"
+							outlined
+							dense
+							style="width: 120px"
+							@update:model-value="onMaxTokensChange"
+						/>
+					</div>
+					<div class="col">
+						<div class="row q-gutter-md">
+							<div class="col">
+								<q-card flat bordered class="text-center q-pa-md">
+									<div class="text-h6 text-primary">{{ estimatedTokens }}</div>
+									<div class="text-caption text-grey-6">Total Tokens</div>
+								</q-card>
+							</div>
+							<div class="col">
+								<q-card flat bordered class="text-center q-pa-md">
+									<div class="text-h6 text-positive">
+										${{ estimatedCost.toFixed(4) }}
+									</div>
+									<div class="text-caption text-grey-6">Est. Cost</div>
+								</q-card>
+							</div>
+							<div class="col">
+								<q-card flat bordered class="text-center q-pa-md">
+									<div class="text-h6 text-info">{{ messageCount }}</div>
+									<div class="text-caption text-grey-6">Messages</div>
+								</q-card>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</q-card-section>
@@ -389,6 +412,11 @@
 		return (estimatedTokens.value / 1000) * 0.008;
 	});
 
+	const messageCount = computed(() => {
+		// Count user messages only (exclude system/error messages)
+		return messages.value.filter((msg) => msg.role === 'user').length;
+	});
+
 	// Watch for new messages to scroll to bottom
 	watch(
 		messages,
@@ -416,11 +444,20 @@
 	};
 
 	const onMaxTokensChange = (newValue) => {
-		console.log('🎛️ Max Tokens Slider MOVED:', {
-			newValue: newValue,
-			userAction: 'Manual slider adjustment',
+		// Validate and constrain the value
+		if (newValue < 100) {
+			maxTokens.value = 100;
+		} else if (newValue > 4000) {
+			maxTokens.value = 4000;
+		} else {
+			maxTokens.value = Math.round(newValue / 100) * 100; // Round to nearest 100
+		}
+
+		console.log('🎛️ Max Tokens Input CHANGED:', {
+			newValue: maxTokens.value,
+			userAction: 'Manual input change',
 			timestamp: new Date().toLocaleString(),
-			component: 'ClaudeChat.vue - Max Tokens Slider',
+			component: 'ClaudeChat.vue - Max Tokens Input',
 		});
 	};
 

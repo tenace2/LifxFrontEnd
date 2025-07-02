@@ -163,7 +163,9 @@
 		}
 	});
 
+	// Perform initial health check on mount, but avoid repeated automated checks
 	onMounted(() => {
+		console.log('🚀 App mounted - performing initial backend health check');
 		checkBackendHealth();
 	});
 </script>
