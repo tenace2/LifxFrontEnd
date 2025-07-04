@@ -119,7 +119,7 @@
 	import { useBackendApi } from './composables/useBackendApi';
 
 	const $q = useQuasar();
-	const { backendStatus, checkBackendHealth } = useBackendApi();
+	const { backendStatus, backendPort, checkBackendHealth } = useBackendApi();
 	const showInfoDialog = ref(false);
 	const lightControlsRef = ref(null);
 
@@ -151,15 +151,16 @@
 	});
 
 	const backendStatusText = computed(() => {
+		const port = backendPort.value;
 		switch (backendStatus.value) {
 			case 'connected':
-				return 'Connected';
+				return `Connected :${port}`;
 			case 'disconnected':
-				return 'Disconnected';
+				return `Disconnected :${port}`;
 			case 'error':
-				return 'Error';
+				return `Error :${port}`;
 			default:
-				return 'Checking...';
+				return `Checking :${port}`;
 		}
 	});
 

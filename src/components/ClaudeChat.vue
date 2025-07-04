@@ -29,9 +29,29 @@
 									<div class="text-body2 q-mb-md">
 										When initializing each Claude AI session, a system prompt
 										(sometimes called a "system message" or "pre-prompt") sets
-										strict boundaries for the AI assistant's behavior. This
-										ensures Claude only responds to lighting control requests
-										and helps prevent accidental off-topic conversations.
+										boundaries for the AI assistant's behavior. This ensures
+										Claude only responds to lighting control requests and helps
+										prevent accidental off-topic conversations. <br /><br />
+										This prompt is actually implemented on the server side.
+										<br /><br />
+										There are two levels of system prompts:
+										<br /><br />
+										There is a <b>Strict</b> system prompt that is Enabled by
+										default, but you can turn it off (Disable). <br /><br />
+										Then there is a <b>General</b> system prompt that is
+										implemented by the server backend, even if you Disable
+										System Prompt on this front end client. <br />
+										Note the General prompt is necessary so that Claude can be
+										made aware of the LIFX MCP tools. Without a General prompt
+										the chat would not be even know of the LIFX capability and
+										would not necesarily respond to lighting control requests.
+										Note that you can get some very odd behavior if you disable
+										the Strict guardrails. The General prompt can possibly allow
+										for <i>random misinterpretations</i> of your chats, such an
+										off topic chat "Please make be bacon and eggs" can result in
+										the "on" in "bacon" being parsed out and turning your lights
+										on. But you can also ask for "I need a recipe for potato
+										salad, oh, and also turn my lights blue".
 									</div>
 
 									<!-- Cost Impact -->
@@ -45,21 +65,42 @@
 										lighting control.
 									</div>
 
-									<!-- View Current System Prompt -->
+									<!-- View Current Strict System Prompt -->
 									<q-expansion-item
 										icon="code"
-										label="View Current System Prompt"
+										label="View Current Strict System Prompt"
 										v-model="showSystemPrompt"
 										@show="onViewSystemPromptOpen"
 										@hide="onViewSystemPromptClose"
 									>
 										<div class="q-pa-md bg-grey-1 rounded-borders">
 											<div class="text-caption text-grey-6 q-mb-sm">
-												This is the exact prompt sent to Claude with every
-												request:
+												The prompt below is sent to Claude with every API
+												request from the backend server, if the System Prompt is
+												Enabled:
 											</div>
 											<pre class="system-prompt-text">{{
 												systemPromptText
+											}}</pre>
+										</div>
+									</q-expansion-item>
+
+									<!-- View General System Prompt -->
+									<q-expansion-item
+										icon="info"
+										label="View General System Prompt"
+										v-model="showGeneralPrompt"
+										@show="onViewGeneralPromptOpen"
+										@hide="onViewGeneralPromptClose"
+										class="q-mt-sm"
+									>
+										<div class="q-pa-md bg-grey-1 rounded-borders">
+											<div class="text-caption text-grey-6 q-mb-sm">
+												If the System Prompt is Disabled, the General prompt is
+												always sent to Claude by the backend server:
+											</div>
+											<pre class="system-prompt-text">{{
+												generalPromptText
 											}}</pre>
 										</div>
 									</q-expansion-item>
@@ -436,6 +477,9 @@
 	const keywordFilterEnabled = ref(true);
 	const showKeywords = ref(false);
 
+	// General System Prompt state
+	const showGeneralPrompt = ref(false);
+
 	// System prompt text constant
 	const systemPromptText = `You are a comprehensive LIFX smart lighting assistant with access to the full LIFX API. You can control lights, create effects, manage scenes, and perform advanced lighting operations.
 
@@ -507,6 +551,18 @@ Examples:
 - Kelvin: "kelvin:3500" (warm white to cool white: 2500-9000K)
 
 You have full access to create amazing lighting experiences!`;
+
+	// General system prompt text constant
+	const generalPromptText = `You are a helpful AI assistant with access to LIFX smart light controls. You can answer questions on any topic and also help control LIFX smart lights when requested.
+
+Available light control capabilities:
+- Turn lights on/off
+- Change colors (use color names, hex codes, or RGB values)
+- Adjust brightness (0-100%)
+- Control specific lights by name or group
+- Apply lighting effects
+
+Feel free to answer general questions about any topic. When users ask about lighting, use the available tools to control their LIFX lights.`;
 
 	// ===========================================
 	// CONSOLE LOGGING FOR EDUCATIONAL PURPOSES
@@ -820,6 +876,26 @@ You have full access to create amazing lighting experiences!`;
 			userAction: 'Closed system prompt text viewer',
 			timestamp: new Date().toLocaleString(),
 			component: 'ClaudeChat.vue - System Prompt Text Viewer',
+		});
+	};
+
+	const onViewGeneralPromptOpen = () => {
+		console.log('👁️ View General Prompt OPENED:', {
+			userAction: 'Viewing general system prompt text',
+			timestamp: new Date().toLocaleString(),
+			component: 'ClaudeChat.vue - General Prompt Text Viewer',
+			promptLength: generalPromptText.length,
+			estimatedTokens: Math.ceil(generalPromptText.length / 4),
+			purpose:
+				'Educational - user examining the general prompt always sent to Claude',
+		});
+	};
+
+	const onViewGeneralPromptClose = () => {
+		console.log('👁️ View General Prompt CLOSED:', {
+			userAction: 'Closed general prompt text viewer',
+			timestamp: new Date().toLocaleString(),
+			component: 'ClaudeChat.vue - General Prompt Text Viewer',
 		});
 	};
 

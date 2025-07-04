@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import axios from 'axios';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
@@ -6,6 +6,22 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
 console.log('Backend URL configured as:', BACKEND_URL || 'Using Vite proxy');
 
 const backendStatus = ref('checking');
+
+// Extract port information for display
+const getBackendPort = () => {
+	if (BACKEND_URL) {
+		try {
+			const url = new URL(BACKEND_URL);
+			return url.port || (url.protocol === 'https:' ? '443' : '80');
+		} catch (e) {
+			return 'unknown';
+		}
+	}
+	// For development with Vite proxy, we know it's proxying to port 3001
+	return '3001';
+};
+
+const backendPort = computed(() => getBackendPort());
 
 export function useBackendApi() {
 	const checkBackendHealth = async () => {
@@ -151,6 +167,7 @@ export function useBackendApi() {
 
 	return {
 		backendStatus,
+		backendPort,
 		checkBackendHealth,
 		makeApiRequest,
 		makeApiRequestWithSessionReset,
