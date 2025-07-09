@@ -1,35 +1,52 @@
 import { ref, computed } from 'vue';
 import axios from 'axios';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
-
-console.log('Backend URL configured as:', BACKEND_URL || 'Using Vite proxy');
-
+// Dynamic backend configuration - will be set by SessionManager
+const backendUrl = ref(sessionStorage.getItem('demo_backend_url') || 'http://localhost:3001');
+const demoKey = ref(sessionStorage.getItem('demo_key') || 'LifxDemo');
 const backendStatus = ref('checking');
 
 // Extract port information for display
 const getBackendPort = () => {
-	if (BACKEND_URL) {
+	if (backendUrl.value) {
 		try {
-			const url = new URL(BACKEND_URL);
+			const url = new URL(backendUrl.value);
 			return url.port || (url.protocol === 'https:' ? '443' : '80');
 		} catch (e) {
 			return 'unknown';
 		}
 	}
-	// For development with Vite proxy, we know it's proxying to port 3001
 	return '3001';
 };
 
 const backendPort = computed(() => getBackendPort());
 
+// Function to update backend configuration
+const updateBackendConfig = (newUrl, newDemoKey) => {
+	backendUrl.value = newUrl;
+	demoKey.value = newDemoKey;
+	
+	// Store in sessionStorage
+	sessionStorage.setItem('demo_backend_url', newUrl);
+	sessionStorage.setItem('demo_key', newDemoKey);
+	
+	// Reset connection status when config changes
+	backendStatus.value = 'checking';
+	
+	console.log('Backend config updated:', {
+		url: newUrl,
+		demoKey: newDemoKey,
+		status: backendStatus.value
+	});
+};
+
 export function useBackendApi() {
 	const checkBackendHealth = async () => {
 		try {
 			backendStatus.value = 'checking';
-			console.log('Checking backend health at:', `${BACKEND_URL}/health`);
+			console.log('Checking backend health at:', `${backendUrl.value}/health`);
 
-			const response = await axios.get(`${BACKEND_URL}/health`, {
+			const response = await axios.get(`${backendUrl.value}/health`, {
 				timeout: 5000,
 			});
 
@@ -40,7 +57,7 @@ export function useBackendApi() {
 				message: error.message,
 				code: error.code,
 				response: error.response?.status,
-				url: `${BACKEND_URL}/health`,
+				url: `${backendUrl.value}/health`,
 			});
 			backendStatus.value = 'disconnected';
 		}
@@ -60,12 +77,12 @@ export function useBackendApi() {
 		const headers = {
 			'Content-Type': 'application/json',
 			'X-Session-ID': sessionId,
-			'X-Demo-Key': 'LifxDemo',
+			'X-Demo-Key': demoKey.value,
 		};
 
 		console.log('📤 Request headers:', headers);
 		console.log('📤 Request data:', data);
-		console.log('📤 Full URL:', `${BACKEND_URL}${endpoint}`);
+		console.log('📤 Full URL:', `${backendUrl.value}${endpoint}`);
 
 		try {
 			const config = {
@@ -75,9 +92,9 @@ export function useBackendApi() {
 
 			let response;
 			if (method.toUpperCase() === 'GET') {
-				response = await axios.get(`${BACKEND_URL}${endpoint}`, config);
+				response = await axios.get(`${backendUrl.value}${endpoint}`, config);
 			} else {
-				response = await axios.post(`${BACKEND_URL}${endpoint}`, data, config);
+				response = await axios.post(`${backendUrl.value}${endpoint}`, data, config);
 			}
 
 			console.log('✅ API request successful:', {
@@ -131,7 +148,7 @@ export function useBackendApi() {
 		const headers = {
 			'Content-Type': 'application/json',
 			'X-Session-ID': sessionId,
-			'X-Demo-Key': 'LifxDemo',
+			'X-Demo-Key': demoKey.value,
 			'X-Force-New-Session': 'true', // Special header to force new session
 			'X-Reset-Session': 'true', // Alternative header
 			'X-Development-Mode': 'true', // Development flag
@@ -141,7 +158,7 @@ export function useBackendApi() {
 		console.log('📤 Request data:', data);
 
 		try {
-			const response = await axios.post(`${BACKEND_URL}${endpoint}`, data, {
+			const response = await axios.post(`${backendUrl.value}${endpoint}`, data, {
 				headers,
 				timeout: 30000,
 			});
@@ -168,9 +185,11 @@ export function useBackendApi() {
 	return {
 		backendStatus,
 		backendPort,
+		backendUrl: computed(() => backendUrl.value),
+		demoKey: computed(() => demoKey.value),
 		checkBackendHealth,
+		updateBackendConfig,
 		makeApiRequest,
 		makeApiRequestWithSessionReset,
-		BACKEND_URL,
 	};
 }

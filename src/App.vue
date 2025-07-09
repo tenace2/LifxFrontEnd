@@ -47,10 +47,10 @@
 
 				<!-- Main Content Grid -->
 				<div class="row q-gutter-md">
-					<!-- Left Column: API Keys, Session Management & Light Controls -->
+					<!-- Left Column: Server Access, API Keys & Light Controls -->
 					<div class="col-12 col-md-4">
-						<TokenManager class="q-mb-md" />
 						<SessionManager class="q-mb-md" />
+						<TokenManager class="q-mb-md" />
 						<LightControls ref="lightControlsRef" />
 					</div>
 
@@ -97,6 +97,7 @@
 					<ul>
 						<li>LIFX API token from cloud.lifx.com/settings</li>
 						<li>Claude API key from console.anthropic.com</li>
+						<li>Backend server URL and Demo Key (configurable above)</li>
 					</ul>
 				</q-card-section>
 
@@ -119,7 +120,7 @@
 	import { useBackendApi } from './composables/useBackendApi';
 
 	const $q = useQuasar();
-	const { backendStatus, backendPort, checkBackendHealth } = useBackendApi();
+	const { backendStatus, backendPort, backendUrl, checkBackendHealth } = useBackendApi();
 	const showInfoDialog = ref(false);
 	const lightControlsRef = ref(null);
 
@@ -152,15 +153,26 @@
 
 	const backendStatusText = computed(() => {
 		const port = backendPort.value;
+		const url = backendUrl.value;
+		
+		// Extract just the domain/host for display
+		let displayUrl = url;
+		try {
+			const urlObj = new URL(url);
+			displayUrl = urlObj.hostname + (urlObj.port ? `:${urlObj.port}` : '');
+		} catch (e) {
+			displayUrl = url;
+		}
+		
 		switch (backendStatus.value) {
 			case 'connected':
-				return `Connected :${port}`;
+				return `Connected: ${displayUrl}`;
 			case 'disconnected':
-				return `Disconnected :${port}`;
+				return `Disconnected: ${displayUrl}`;
 			case 'error':
-				return `Error :${port}`;
+				return `Error: ${displayUrl}`;
 			default:
-				return `Checking :${port}`;
+				return `Checking: ${displayUrl}`;
 		}
 	});
 

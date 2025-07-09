@@ -187,6 +187,7 @@
 		{ name: 'Blue', hex: '#0000FF', hue: 240, saturation: 1 },
 		{ name: 'Yellow', hex: '#FFFF00', hue: 60, saturation: 1 },
 		{ name: 'Purple', hex: '#FF00FF', hue: 300, saturation: 1 },
+		{ name: 'Pink', hex: '#FFC0CB', hue: 350, saturation: 0.25 },
 		{ name: 'Cyan', hex: '#00FFFF', hue: 180, saturation: 1 },
 		{ name: 'Orange', hex: '#FF8000', hue: 30, saturation: 1 },
 		{ name: 'White', hex: '#FFFFFF', hue: 0, saturation: 0 },
