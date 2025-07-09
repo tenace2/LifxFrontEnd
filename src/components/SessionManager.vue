@@ -304,7 +304,7 @@
 			);
 
 			// Test connection
-			await checkBackendHealth();
+			await checkBackendHealth(true); // Force check after manual connection
 
 			if (backendStatus.value === 'connected') {
 				$q.notify({

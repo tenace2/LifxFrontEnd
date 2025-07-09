@@ -646,7 +646,7 @@
 			backendStatus.value === 'disconnected'
 		) {
 			console.log('🔗 Performing initial backend health check...');
-			checkBackendHealth();
+			checkBackendHealth(true); // Force initial check
 		} else {
 			console.log('🔗 Backend status already known:', backendStatus.value);
 		}

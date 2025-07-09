@@ -38,7 +38,7 @@
 					</template>
 					Backend server is disconnected. Some features may not work.
 					<template v-slot:action>
-						<q-btn flat @click="checkBackendHealth">Retry</q-btn>
+						<q-btn flat @click="() => checkBackendHealth(true)">Retry</q-btn>
 					</template>
 				</q-banner>
 
@@ -180,7 +180,7 @@
 	// Perform initial health check on mount, but avoid repeated automated checks
 	onMounted(() => {
 		console.log('🚀 App mounted - performing initial backend health check');
-		checkBackendHealth();
+		checkBackendHealth(true); // Force initial check
 	});
 </script>
 

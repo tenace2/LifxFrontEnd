@@ -8,6 +8,17 @@ const backendUrl = ref(
 const demoKey = ref(sessionStorage.getItem('demo_key') || 'LifxDemo');
 const backendStatus = ref('checking');
 
+// Environment detection for optimizing health checks
+const isProduction = () => {
+	return (
+		process.env.NODE_ENV === 'production' ||
+		backendUrl.value.includes('railway.app') ||
+		backendUrl.value.includes('heroku') ||
+		backendUrl.value.includes('vercel') ||
+		!backendUrl.value.includes('localhost')
+	);
+};
+
 // Extract port information for display
 const getBackendPort = () => {
 	if (backendUrl.value) {
@@ -43,10 +54,40 @@ const updateBackendConfig = (newUrl, newDemoKey) => {
 };
 
 export function useBackendApi() {
-	const checkBackendHealth = async () => {
+	// Rate limiting for health checks - prevent excessive requests
+	let lastHealthCheck = 0;
+
+	const checkBackendHealth = async (force = false) => {
+		const now = Date.now();
+
+		// Adaptive cooldown: longer in production to save hosting costs
+		const HEALTH_CHECK_COOLDOWN = isProduction() ? 120000 : 30000; // 2 min prod, 30 sec dev
+
+		// Skip if within cooldown period (unless forced)
+		if (!force && now - lastHealthCheck < HEALTH_CHECK_COOLDOWN) {
+			console.log(
+				`⏱️ Health check skipped - within ${
+					HEALTH_CHECK_COOLDOWN / 1000
+				}s cooldown period`
+			);
+			return;
+		}
+
 		try {
 			backendStatus.value = 'checking';
-			console.log('Checking backend health at:', `${backendUrl.value}/health`);
+			lastHealthCheck = now;
+
+			if (isProduction()) {
+				console.log(
+					'🌐 Production health check:',
+					`${backendUrl.value}/health`
+				);
+			} else {
+				console.log(
+					'🔧 Development health check:',
+					`${backendUrl.value}/health`
+				);
+			}
 
 			const response = await axios.get(`${backendUrl.value}/health`, {
 				timeout: 5000,
