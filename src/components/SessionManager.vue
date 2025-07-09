@@ -176,7 +176,7 @@
 	} = useSessionTracking();
 
 	const { clearApiKeys } = useApiKeys();
-	
+
 	const {
 		backendStatus,
 		backendUrl,
@@ -189,7 +189,7 @@
 	const localBackendUrl = ref('');
 	const localDemoKey = ref('');
 	const serverConfigExpanded = ref(false);
-	
+
 	// Validation errors
 	const urlError = ref('');
 	const demoKeyError = ref('');
@@ -253,7 +253,7 @@
 			urlError.value = 'URL is required';
 			return false;
 		}
-		
+
 		try {
 			new URL(url);
 			urlError.value = '';
@@ -270,22 +270,22 @@
 			demoKeyError.value = 'Demo key is required';
 			return false;
 		}
-		
+
 		if (key.length < 4) {
 			demoKeyError.value = 'Demo key must be at least 4 characters';
 			return false;
 		}
-		
+
 		if (key.length > 10) {
 			demoKeyError.value = 'Demo key must be no more than 10 characters';
 			return false;
 		}
-		
+
 		if (!/^[a-zA-Z]+$/.test(key)) {
 			demoKeyError.value = 'Demo key must contain only letters';
 			return false;
 		}
-		
+
 		demoKeyError.value = '';
 		return true;
 	};
@@ -298,11 +298,14 @@
 
 		try {
 			// Update backend configuration
-			updateBackendConfig(localBackendUrl.value.trim(), localDemoKey.value.trim());
-			
+			updateBackendConfig(
+				localBackendUrl.value.trim(),
+				localDemoKey.value.trim()
+			);
+
 			// Test connection
 			await checkBackendHealth();
-			
+
 			if (backendStatus.value === 'connected') {
 				$q.notify({
 					type: 'positive',
@@ -329,7 +332,7 @@
 		// Set status to disconnected without changing the URL/key values
 		// This allows user to keep their settings but manually disconnect
 		backendStatus.value = 'disconnected';
-		
+
 		$q.notify({
 			type: 'info',
 			message: 'Disconnected from backend server',
@@ -341,7 +344,7 @@
 	onMounted(() => {
 		localBackendUrl.value = backendUrl.value || 'http://localhost:3001';
 		localDemoKey.value = demoKey.value || 'LifxDemo';
-		
+
 		// Validate initial values
 		validateUrl();
 		validateDemoKey();

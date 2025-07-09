@@ -2,7 +2,9 @@ import { ref, computed } from 'vue';
 import axios from 'axios';
 
 // Dynamic backend configuration - will be set by SessionManager
-const backendUrl = ref(sessionStorage.getItem('demo_backend_url') || 'http://localhost:3001');
+const backendUrl = ref(
+	sessionStorage.getItem('demo_backend_url') || 'http://localhost:3001'
+);
 const demoKey = ref(sessionStorage.getItem('demo_key') || 'LifxDemo');
 const backendStatus = ref('checking');
 
@@ -25,18 +27,18 @@ const backendPort = computed(() => getBackendPort());
 const updateBackendConfig = (newUrl, newDemoKey) => {
 	backendUrl.value = newUrl;
 	demoKey.value = newDemoKey;
-	
+
 	// Store in sessionStorage
 	sessionStorage.setItem('demo_backend_url', newUrl);
 	sessionStorage.setItem('demo_key', newDemoKey);
-	
+
 	// Reset connection status when config changes
 	backendStatus.value = 'checking';
-	
+
 	console.log('Backend config updated:', {
 		url: newUrl,
 		demoKey: newDemoKey,
-		status: backendStatus.value
+		status: backendStatus.value,
 	});
 };
 
@@ -94,7 +96,11 @@ export function useBackendApi() {
 			if (method.toUpperCase() === 'GET') {
 				response = await axios.get(`${backendUrl.value}${endpoint}`, config);
 			} else {
-				response = await axios.post(`${backendUrl.value}${endpoint}`, data, config);
+				response = await axios.post(
+					`${backendUrl.value}${endpoint}`,
+					data,
+					config
+				);
 			}
 
 			console.log('✅ API request successful:', {
@@ -158,10 +164,14 @@ export function useBackendApi() {
 		console.log('📤 Request data:', data);
 
 		try {
-			const response = await axios.post(`${backendUrl.value}${endpoint}`, data, {
-				headers,
-				timeout: 30000,
-			});
+			const response = await axios.post(
+				`${backendUrl.value}${endpoint}`,
+				data,
+				{
+					headers,
+					timeout: 30000,
+				}
+			);
 
 			console.log('✅ Force reset API request successful:', {
 				status: response.status,

@@ -120,7 +120,8 @@
 	import { useBackendApi } from './composables/useBackendApi';
 
 	const $q = useQuasar();
-	const { backendStatus, backendPort, backendUrl, checkBackendHealth } = useBackendApi();
+	const { backendStatus, backendPort, backendUrl, checkBackendHealth } =
+		useBackendApi();
 	const showInfoDialog = ref(false);
 	const lightControlsRef = ref(null);
 
@@ -154,7 +155,7 @@
 	const backendStatusText = computed(() => {
 		const port = backendPort.value;
 		const url = backendUrl.value;
-		
+
 		// Extract just the domain/host for display
 		let displayUrl = url;
 		try {
@@ -163,7 +164,7 @@
 		} catch (e) {
 			displayUrl = url;
 		}
-		
+
 		switch (backendStatus.value) {
 			case 'connected':
 				return `Connected: ${displayUrl}`;
