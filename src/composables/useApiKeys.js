@@ -4,24 +4,24 @@ const lifxApiKey = ref('');
 const claudeApiKey = ref('');
 
 export function useApiKeys() {
-	// Load API keys from sessionStorage on initialization
+	// Load API keys from localStorage on initialization (persistent across browser sessions)
 	const loadApiKeys = () => {
-		lifxApiKey.value = sessionStorage.getItem('lifx_api_key') || '';
-		claudeApiKey.value = sessionStorage.getItem('claude_api_key') || '';
+		lifxApiKey.value = localStorage.getItem('lifx_api_key') || '';
+		claudeApiKey.value = localStorage.getItem('claude_api_key') || '';
 	};
 
-	// Save API keys to sessionStorage
+	// Save API keys to localStorage (persistent across browser sessions)
 	const saveApiKeys = () => {
 		if (lifxApiKey.value) {
-			sessionStorage.setItem('lifx_api_key', lifxApiKey.value);
+			localStorage.setItem('lifx_api_key', lifxApiKey.value);
 		} else {
-			sessionStorage.removeItem('lifx_api_key');
+			localStorage.removeItem('lifx_api_key');
 		}
 
 		if (claudeApiKey.value) {
-			sessionStorage.setItem('claude_api_key', claudeApiKey.value);
+			localStorage.setItem('claude_api_key', claudeApiKey.value);
 		} else {
-			sessionStorage.removeItem('claude_api_key');
+			localStorage.removeItem('claude_api_key');
 		}
 	};
 
@@ -54,8 +54,8 @@ export function useApiKeys() {
 	const clearApiKeys = () => {
 		lifxApiKey.value = '';
 		claudeApiKey.value = '';
-		sessionStorage.removeItem('lifx_api_key');
-		sessionStorage.removeItem('claude_api_key');
+		localStorage.removeItem('lifx_api_key');
+		localStorage.removeItem('claude_api_key');
 	};
 
 	// Initialize on first load

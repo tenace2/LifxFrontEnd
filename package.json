@@ -4,7 +4,7 @@
 	"description": "LIFX-Claude Client-Side Vue.js SPA",
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
+		"dev": "vite --port 5173",
 		"build": "vite build",
 		"preview": "vite preview",
 		"deploy": "npm run build && gh-pages -d dist"

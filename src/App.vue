@@ -38,7 +38,9 @@
 					</template>
 					Backend server is disconnected. Some features may not work.
 					<template v-slot:action>
-						<q-btn flat @click="() => checkBackendHealth(true)">Retry</q-btn>
+						<q-btn flat @click="() => checkBackendHealth(true, 'manual-retry')"
+							>Retry</q-btn
+						>
 					</template>
 				</q-banner>
 
@@ -177,10 +179,22 @@
 		}
 	});
 
-	// Perform initial health check on mount, but avoid repeated automated checks
+	// Perform initial health check on mount only if needed
 	onMounted(() => {
-		console.log('🚀 App mounted - performing initial backend health check');
-		checkBackendHealth(true); // Force initial check
+		console.log(
+			'🚀 App mounted - checking if initial backend health check needed'
+		);
+
+		// Only do initial health check if status is 'checking' or 'disconnected'
+		if (
+			backendStatus.value === 'checking' ||
+			backendStatus.value === 'disconnected'
+		) {
+			console.log('🔍 Performing one-time initial backend health check');
+			checkBackendHealth(true, 'initial'); // Force initial check with source
+		} else {
+			console.log('✅ Backend status already known:', backendStatus.value);
+		}
 	});
 </script>
 

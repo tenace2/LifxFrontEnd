@@ -56,12 +56,33 @@ const updateBackendConfig = (newUrl, newDemoKey) => {
 export function useBackendApi() {
 	// Rate limiting for health checks - prevent excessive requests
 	let lastHealthCheck = 0;
+	let initialHealthCheckDone = false; // Prevent multiple initial checks
 
-	const checkBackendHealth = async (force = false) => {
+	const checkBackendHealth = async (force = false, source = 'unknown') => {
 		const now = Date.now();
 
-		// Adaptive cooldown: longer in production to save hosting costs
-		const HEALTH_CHECK_COOLDOWN = isProduction() ? 120000 : 30000; // 2 min prod, 30 sec dev
+		// Adaptive cooldown: much longer to minimize hosting costs
+		const HEALTH_CHECK_COOLDOWN = isProduction() ? 300000 : 120000; // 5 min prod, 2 min dev
+
+		// Prevent multiple initial health checks from App.vue mount
+		if (source === 'initial' && initialHealthCheckDone && !force) {
+			console.log('⚠️ Initial health check already completed, skipping');
+			return;
+		}
+
+		// Only log health checks in development for debugging
+		if (!isProduction()) {
+			const caller = new Error().stack?.split('\n')[2]?.trim() || 'unknown';
+			console.log('🩺 Health check called:', {
+				force,
+				source,
+				timeSinceLastCheck: now - lastHealthCheck,
+				cooldownPeriod: HEALTH_CHECK_COOLDOWN,
+				calledBy: caller.includes('at ') ? caller.split('at ')[1] : caller,
+				willSkip: !force && now - lastHealthCheck < HEALTH_CHECK_COOLDOWN,
+				timestamp: new Date().toISOString(),
+			});
+		}
 
 		// Skip if within cooldown period (unless forced)
 		if (!force && now - lastHealthCheck < HEALTH_CHECK_COOLDOWN) {
@@ -76,6 +97,11 @@ export function useBackendApi() {
 		try {
 			backendStatus.value = 'checking';
 			lastHealthCheck = now;
+
+			// Mark initial check as done
+			if (source === 'initial') {
+				initialHealthCheckDone = true;
+			}
 
 			if (isProduction()) {
 				console.log(

@@ -646,7 +646,7 @@
 			backendStatus.value === 'disconnected'
 		) {
 			console.log('🔗 Performing initial backend health check...');
-			checkBackendHealth(true); // Force initial check
+			checkBackendHealth(true, 'token-manager-initial'); // Force initial check
 		} else {
 			console.log('🔗 Backend status already known:', backendStatus.value);
 		}

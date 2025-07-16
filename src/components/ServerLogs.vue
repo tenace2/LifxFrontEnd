@@ -10,7 +10,7 @@
 				</div>
 				<div class="col-auto">
 					<q-btn
-						@click="() => checkBackendHealth(true)"
+						@click="() => checkBackendHealth(true, 'manual-health-check')"
 						icon="health_and_safety"
 						label="Health Check"
 						color="primary"
