@@ -3,9 +3,9 @@ import axios from 'axios';
 
 // Dynamic backend configuration - will be set by SessionManager
 const backendUrl = ref(
-	sessionStorage.getItem('demo_backend_url') || 'http://localhost:3001'
+	localStorage.getItem('demo_backend_url') || 'http://localhost:3001'
 );
-const demoKey = ref(sessionStorage.getItem('demo_key') || 'LifxDemo');
+const demoKey = ref(localStorage.getItem('demo_key') || 'LifxDemo');
 const backendStatus = ref('checking');
 
 // Environment detection for optimizing health checks
@@ -39,9 +39,9 @@ const updateBackendConfig = (newUrl, newDemoKey) => {
 	backendUrl.value = newUrl;
 	demoKey.value = newDemoKey;
 
-	// Store in sessionStorage
-	sessionStorage.setItem('demo_backend_url', newUrl);
-	sessionStorage.setItem('demo_key', newDemoKey);
+	// Store in localStorage for persistence across browser sessions
+	localStorage.setItem('demo_backend_url', newUrl);
+	localStorage.setItem('demo_key', newDemoKey);
 
 	// Reset connection status when config changes
 	backendStatus.value = 'checking';

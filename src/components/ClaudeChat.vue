@@ -241,48 +241,83 @@
 			<q-card flat bordered class="q-mb-md">
 				<q-card-section>
 					<div class="text-subtitle2 q-mb-sm">Token Settings & Statistics</div>
-					<div class="row q-gutter-md items-start">
-						<div class="col-auto">
-							<q-input
-								v-model.number="maxTokens"
-								label="Max Tokens"
-								type="number"
-								:min="100"
-								:max="4000"
-								:step="100"
-								outlined
-								dense
-								style="width: 120px"
-								@update:model-value="onMaxTokensChange"
-							/>
-						</div>
-						<div class="col">
-							<div class="row q-gutter-md">
-								<div class="col">
-									<q-card flat bordered class="text-center q-pa-md">
-										<div class="text-h6 text-primary">
-											{{ estimatedTokens }}
-										</div>
-										<div class="text-caption text-grey-6">Total Tokens</div>
-									</q-card>
-								</div>
-								<div class="col">
-									<q-card flat bordered class="text-center q-pa-md">
-										<div class="text-h6 text-positive">
-											${{ estimatedCost.toFixed(4) }}
-										</div>
-										<div class="text-caption text-grey-6">Est. Cost</div>
-									</q-card>
-								</div>
-								<div class="col">
-									<q-card flat bordered class="text-center q-pa-md">
-										<div class="text-h6 text-info">{{ messageCount }}</div>
-										<div class="text-caption text-grey-6">Messages</div>
-									</q-card>
-								</div>
+
+					<!-- Max Tokens Input - Always visible, responsive width -->
+					<div class="q-mb-md">
+						<q-input
+							v-model.number="maxTokens"
+							label="Max Tokens"
+							type="number"
+							:min="100"
+							:max="4000"
+							:step="100"
+							outlined
+							dense
+							class="token-input"
+							@update:model-value="onMaxTokensChange"
+						/>
+					</div>
+
+					<!-- Statistics Section - Collapsible on mobile -->
+					<q-expansion-item
+						v-model="showTokenStats"
+						icon="analytics"
+						label="Token Statistics"
+						:default-opened="$q.screen.gt.sm"
+						:header-class="$q.screen.lt.md ? 'text-weight-medium' : ''"
+					>
+						<!-- Desktop/Tablet Layout -->
+						<div v-if="$q.screen.gt.sm" class="row q-gutter-md q-pt-md">
+							<div class="col">
+								<q-card flat bordered class="text-center q-pa-md">
+									<div class="text-h6 text-primary">
+										{{ estimatedTokens }}
+									</div>
+									<div class="text-caption text-grey-6">Total Tokens</div>
+								</q-card>
+							</div>
+							<div class="col">
+								<q-card flat bordered class="text-center q-pa-md">
+									<div class="text-h6 text-positive">
+										${{ estimatedCost.toFixed(4) }}
+									</div>
+									<div class="text-caption text-grey-6">Est. Cost</div>
+								</q-card>
+							</div>
+							<div class="col">
+								<q-card flat bordered class="text-center q-pa-md">
+									<div class="text-h6 text-info">{{ messageCount }}</div>
+									<div class="text-caption text-grey-6">Messages</div>
+								</q-card>
 							</div>
 						</div>
-					</div>
+
+						<!-- Mobile Layout - Stacked -->
+						<div v-else class="q-pt-md">
+							<div class="q-mb-sm">
+								<q-card flat bordered class="text-center q-pa-sm">
+									<div class="text-h6 text-primary">
+										{{ estimatedTokens }}
+									</div>
+									<div class="text-caption text-grey-6">Total Tokens</div>
+								</q-card>
+							</div>
+							<div class="q-mb-sm">
+								<q-card flat bordered class="text-center q-pa-sm">
+									<div class="text-h6 text-positive">
+										${{ estimatedCost.toFixed(4) }}
+									</div>
+									<div class="text-caption text-grey-6">Est. Cost</div>
+								</q-card>
+							</div>
+							<div class="q-mb-sm">
+								<q-card flat bordered class="text-center q-pa-sm">
+									<div class="text-h6 text-info">{{ messageCount }}</div>
+									<div class="text-caption text-grey-6">Messages</div>
+								</q-card>
+							</div>
+						</div>
+					</q-expansion-item>
 				</q-card-section>
 			</q-card>
 		</q-card-section>
@@ -479,6 +514,9 @@
 
 	// General System Prompt state
 	const showGeneralPrompt = ref(false);
+
+	// Token Statistics visibility state
+	const showTokenStats = ref(false);
 
 	// System prompt text constant
 	const systemPromptText = `You are a comprehensive LIFX smart lighting assistant with access to the full LIFX API. You can control lights, create effects, manage scenes, and perform advanced lighting operations.
@@ -1421,6 +1459,23 @@ Feel free to answer general questions about any topic. When users ask about ligh
 			font-size: 10px;
 			padding: 8px;
 			max-height: 200px;
+		}
+	}
+
+	/* Token Settings Responsive Styles */
+	.token-input {
+		max-width: 200px;
+	}
+
+	@media (max-width: 599px) {
+		.token-input {
+			max-width: 100%;
+		}
+	}
+
+	@media (min-width: 600px) {
+		.token-input {
+			max-width: 150px;
 		}
 	}
 </style>

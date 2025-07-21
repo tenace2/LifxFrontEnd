@@ -352,8 +352,9 @@
 			// Clear session storage completely
 			sessionStorage.removeItem('demo_session_id');
 			sessionStorage.removeItem('session_start_time');
-			sessionStorage.removeItem('demo_backend_url');
-			sessionStorage.removeItem('demo_key');
+			// Clear backend config from localStorage (now persistent)
+			localStorage.removeItem('demo_backend_url');
+			localStorage.removeItem('demo_key');
 			resetSession();
 			// Force page reload to ensure clean state
 			window.location.reload();
@@ -373,6 +374,9 @@
 			sessionStorage.clear();
 			// Clear API keys (from localStorage)
 			clearApiKeys();
+			// Clear backend config (from localStorage)
+			localStorage.removeItem('demo_backend_url');
+			localStorage.removeItem('demo_key');
 			// Reset session tracking
 			resetSession();
 			$q.notify({
