@@ -8,6 +8,7 @@ A Vue.js client-side application for controlling LIFX smart lights through Claud
 
 - **Natural Language Control**: Use Claude AI to control your LIFX lights with natural language
 - **Direct Light Control**: Manual control interface for immediate light adjustments
+- **Dynamic Backend Configuration**: Configure and switch between different backend servers at runtime
 - **Real-time Status**: Live monitoring of backend server connection and light status
 - **Usage Tracking**: Session-based request tracking with visual indicators
 - **Secure API Handling**: Session-only storage of API keys with proper validation
@@ -86,25 +87,24 @@ npm run deploy
 
 ## ⚙️ Configuration
 
-### Environment Variables
+### Environment Variables (Optional)
 
-Create a `.env` file in the root directory:
+The application has dynamic backend configuration through the UI, but you can optionally set a default backend URL:
 
 ```env
 VITE_BACKEND_URL=https://your-railway-app.railway.app
 ```
 
-### Backend Server
+**Note**: The backend URL is configurable at runtime through the "Server Access & Session Management" component, so environment variables are only used as defaults.
 
-Update the backend URL in `vite.config.js` once your Railway server is deployed:
+### Backend Server Configuration
 
-```javascript
-define: {
-  'process.env': {
-    BACKEND_URL: JSON.stringify('https://your-railway-app.railway.app')
-  }
-}
-```
+The frontend connects to configurable backend servers through the **Server Access & Session Management** component in the UI. No code changes are required - simply configure your backend URL through the interface:
+
+1. **Development**: Use `http://localhost:3001` (default) when running a local backend
+2. **Production**: Use your Railway server URL (e.g., `https://your-app.railway.app`)
+
+The application automatically uses the configured backend URL for all API requests. The `vite.config.js` `BACKEND_URL` is only used as a fallback default value.
 
 ## 🔒 Security Features
 
@@ -116,9 +116,10 @@ define: {
 
 ## 🎯 Usage
 
-1. **Enter API Keys**: Input your LIFX and Claude API keys in the Token Manager
-2. **Test Connection**: Verify your LIFX connection and discover lights
-3. **Control Lights**: Use either:
+1. **Configure Backend Server**: Set your backend server URL in the "Server Access & Session Management" section
+2. **Enter API Keys**: Input your LIFX and Claude API keys in the Token Manager
+3. **Test Connection**: Verify your LIFX connection and discover lights
+4. **Control Lights**: Use either:
    - **Manual Controls**: Direct light manipulation with sliders and color pickers
    - **Claude Chat**: Natural language commands like "Turn on the living room lights"
 
@@ -135,6 +136,7 @@ define: {
 ```
 src/
 ├── components/
+│   ├── SessionManager.vue    # Backend server configuration
 │   ├── TokenManager.vue      # API key management
 │   ├── ClaudeChat.vue        # Claude AI chat interface
 │   ├── LightControls.vue     # Manual light controls
@@ -152,9 +154,16 @@ This is an **educational demo** showcasing:
 
 - Model Context Protocol (MCP) integration
 - Client-server architecture patterns
+- Dynamic backend configuration without hardcoded proxies
 - Vue.js 3 Composition API best practices
 - Secure API key handling in SPAs
 - Real-time status monitoring
+
+### Architecture Changes
+
+- **No Development Proxy**: The application connects directly to configured backend servers in both development and production
+- **Runtime Configuration**: Backend servers can be changed through the UI without code modifications
+- **Consistent Behavior**: Development and production modes behave identically
 
 ## 🔗 Related Repositories
 
