@@ -114,6 +114,22 @@ The application automatically uses the configured backend URL for all API reques
 - **Keyword filtering**: Pre-filter messages for light-related content
 - **Rate limiting**: Visual usage indicators and request limits
 - **Error handling**: Comprehensive error messages and recovery
+- **Centralized Session Management**: Consistent session ID tracking across all API requests to prevent session conflicts
+
+## 🔧 Recent Improvements
+
+### Session ID Consistency Fix (v1.2.0)
+
+**Issue Resolved**: Fixed session ID inconsistency where different API requests were using different session IDs, causing backend session tracking problems.
+
+**Changes Made**:
+
+- Centralized session ID management through `useSessionTracking` composable
+- Updated `useBackendApi.js` to use centralized `getSessionId()` function
+- Eliminated duplicate session ID generation in API request functions
+- Improved session consistency across all frontend-backend communications
+
+**Impact**: All API requests now use the same session ID that's displayed in the Session Manager, ensuring proper backend session tracking and preventing "multiple sessions" errors.
 
 ## 🎯 Usage
 

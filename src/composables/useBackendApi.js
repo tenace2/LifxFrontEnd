@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import axios from 'axios';
+import { useSessionTracking } from './useSessionTracking';
 
 // Dynamic backend configuration - will be set by SessionManager
 const backendUrl = ref(
@@ -54,6 +55,9 @@ const updateBackendConfig = (newUrl, newDemoKey) => {
 };
 
 export function useBackendApi() {
+	// Get session tracking for centralized session ID management
+	const { getSessionId } = useSessionTracking();
+
 	// Rate limiting for health checks - prevent excessive requests
 	let lastHealthCheck = 0;
 	let initialHealthCheckDone = false; // Prevent multiple initial checks
@@ -135,13 +139,9 @@ export function useBackendApi() {
 	const makeApiRequest = async (endpoint, data = {}, method = 'POST') => {
 		console.log('🚀 Starting API request to:', endpoint);
 
-		const sessionId =
-			sessionStorage.getItem('demo_session_id') ||
-			`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-		console.log('📋 Current session ID:', sessionId);
-		console.log('💾 Saving session ID to sessionStorage');
-		sessionStorage.setItem('demo_session_id', sessionId);
+		// Use centralized session ID management
+		const sessionId = getSessionId();
+		console.log('� Using session ID from centralized tracking:', sessionId);
 
 		const headers = {
 			'Content-Type': 'application/json',
@@ -211,12 +211,12 @@ export function useBackendApi() {
 	const makeApiRequestWithSessionReset = async (endpoint, data = {}) => {
 		console.log('💥 Making API request WITH FORCE SESSION RESET to:', endpoint);
 
-		const sessionId =
-			sessionStorage.getItem('demo_session_id') ||
-			`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-		console.log('📋 Session ID for force reset:', sessionId);
-		sessionStorage.setItem('demo_session_id', sessionId);
+		// Use centralized session ID management for force reset too
+		const sessionId = getSessionId();
+		console.log(
+			'📋 Using session ID from centralized tracking for force reset:',
+			sessionId
+		);
 
 		const headers = {
 			'Content-Type': 'application/json',
