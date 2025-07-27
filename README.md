@@ -10,6 +10,7 @@ A Vue.js client-side application for controlling LIFX smart lights through Claud
 - **Direct Light Control**: Manual control interface for immediate light adjustments
 - **Dynamic Backend Configuration**: Configure and switch between different backend servers at runtime
 - **Real-time Status**: Live monitoring of backend server connection and light status
+- **Time-Delimited Server Logs**: View backend and MCP server logs with configurable time frames (15 minutes, 1 hour, 4 hours)
 - **Usage Tracking**: Session-based request tracking with visual indicators
 - **Secure API Handling**: Session-only storage of API keys with proper validation
 - **Responsive Design**: Mobile-friendly interface built with Quasar Framework
@@ -123,6 +124,26 @@ The application automatically uses the configured backend URL for all API reques
    - **Manual Controls**: Direct light manipulation with sliders and color pickers
    - **Claude Chat**: Natural language commands like "Turn on the living room lights"
 
+### Server Logs
+
+The **Combined Server Logs** component provides real-time access to backend and MCP server logs with time-based filtering:
+
+- **Time Frame Options**:
+
+  - **Last 15 minutes**: Recent activity and errors (default)
+  - **Last 1 hour**: Extended troubleshooting view
+  - **Last 4 hours**: Comprehensive session logs
+
+- **Features**:
+  - **Dropdown Selection**: Click the dropdown arrow on the refresh button to choose time frames
+  - **Automatic Refresh**: Logs automatically refresh when switching time frames
+  - **Combined View**: See both backend manager and LIFX MCP server logs in chronological order
+  - **Separate Views**: Individual tabs for backend and MCP logs
+  - **Copy Functionality**: Copy logs to clipboard for external analysis
+  - **Visual Indicators**: Shows selected time frame and entry counts
+
+This feature is particularly useful for troubleshooting issues without downloading excessive log data, similar to Railway's log filtering capabilities.
+
 ### Example Commands
 
 - "Turn on all lights"
@@ -140,10 +161,12 @@ src/
 │   ├── TokenManager.vue      # API key management
 │   ├── ClaudeChat.vue        # Claude AI chat interface
 │   ├── LightControls.vue     # Manual light controls
+│   ├── ServerLogs.vue        # Time-delimited server logs viewer
 │   └── UsageIndicator.vue    # Session usage display
 ├── composables/
 │   ├── useBackendApi.js      # Backend communication
 │   ├── useApiKeys.js         # API key management
+│   ├── useServerLogs.js      # Server logs fetching and management
 │   └── useSessionTracking.js # Usage tracking
 └── App.vue                   # Main application
 ```
@@ -193,4 +216,4 @@ For issues and questions:
 
 - Check the [Issues](https://github.com/tenace2/LifxFrontEnd/issues) page
 - Review the [client_copilot_instructions.md](client_copilot_instructions.md) for detailed specifications
-trigger-rebuild-1750784796
+  trigger-rebuild-1750784796

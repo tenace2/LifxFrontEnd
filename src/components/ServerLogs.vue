@@ -22,18 +22,53 @@
 			</div>
 			<div class="text-caption text-grey-6 q-mb-md">
 				Backend Manager + LIFX MCP Server Output
+				<q-chip
+					v-if="lastUpdated"
+					size="sm"
+					color="info"
+					text-color="white"
+					icon="schedule"
+					class="q-ml-sm"
+				>
+					{{ selectedTimeFrame.label }}
+				</q-chip>
 			</div>
 
 			<!-- Controls -->
 			<div class="row q-gutter-sm q-mb-md">
-				<q-btn
-					@click="refreshLogs"
+				<q-btn-dropdown
 					icon="refresh"
-					label="Refresh Logs"
+					:label="selectedTimeFrame.label"
 					color="primary"
 					:loading="isLoading"
 					size="sm"
-				/>
+					split
+					@click="refreshLogs(selectedTimeFrame.value)"
+				>
+					<q-list>
+						<q-item
+							v-for="timeFrame in timeFrameOptions"
+							:key="timeFrame.value"
+							clickable
+							v-close-popup
+							@click="selectTimeFrame(timeFrame)"
+							:class="{
+								'bg-blue-1': timeFrame.value === selectedTimeFrame.value,
+							}"
+						>
+							<q-item-section>
+								<q-item-label>{{ timeFrame.label }}</q-item-label>
+								<q-item-label caption>{{ timeFrame.description }}</q-item-label>
+							</q-item-section>
+							<q-item-section
+								side
+								v-if="timeFrame.value === selectedTimeFrame.value"
+							>
+								<q-icon name="check" color="primary" />
+							</q-item-section>
+						</q-item>
+					</q-list>
+				</q-btn-dropdown>
 				<q-btn
 					@click="copyLogs"
 					icon="content_copy"
@@ -257,6 +292,27 @@
 
 	const activeTab = ref('combined');
 
+	// Time frame options for log filtering
+	const timeFrameOptions = [
+		{
+			value: 15,
+			label: 'Last 15 minutes',
+			description: 'Recent activity and errors',
+		},
+		{
+			value: 60,
+			label: 'Last 1 hour',
+			description: 'Extended troubleshooting view',
+		},
+		{
+			value: 240,
+			label: 'Last 4 hours',
+			description: 'Comprehensive session logs',
+		},
+	];
+
+	const selectedTimeFrame = ref(timeFrameOptions[0]); // Default to 15 minutes
+
 	// Computed properties for formatted log text
 	const backendLogsText = computed(() => {
 		return backendLogs.value
@@ -302,7 +358,9 @@
 	});
 
 	// Methods
-	const refreshLogs = async () => {
+	const refreshLogs = async (
+		timeFrameMinutes = selectedTimeFrame.value.value
+	) => {
 		if (backendStatus.value !== 'connected') {
 			$q.notify({
 				type: 'warning',
@@ -313,14 +371,19 @@
 		}
 
 		try {
+			// Calculate the 'since' timestamp based on time frame
+			const since = new Date(
+				Date.now() - timeFrameMinutes * 60 * 1000
+			).toISOString();
+
 			await fetchAllLogs({
-				backend: { limit: 25 },
-				mcp: { limit: 20 },
+				backend: { limit: 100, since }, // Increased limit for time-based filtering
+				mcp: { limit: 100, since },
 			});
 
 			$q.notify({
 				type: 'positive',
-				message: 'Server logs refreshed successfully',
+				message: `Server logs refreshed (${selectedTimeFrame.value.label})`,
 				timeout: 2000,
 			});
 		} catch (err) {
@@ -330,6 +393,12 @@
 				timeout: 4000,
 			});
 		}
+	};
+
+	const selectTimeFrame = (timeFrame) => {
+		selectedTimeFrame.value = timeFrame;
+		// Automatically refresh logs with new time frame
+		refreshLogs(timeFrame.value);
 	};
 
 	const copyLogs = async (source = 'all') => {
