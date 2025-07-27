@@ -12,16 +12,8 @@ export default defineConfig({
 	],
 	server: {
 		port: 5173,
-		proxy: {
-			'/api': {
-				target: 'http://localhost:3001',
-				changeOrigin: true,
-			},
-			'/health': {
-				target: 'http://localhost:3001',
-				changeOrigin: true,
-			},
-		},
+		// Proxy removed to allow dynamic backend configuration
+		// The frontend will connect directly to the configured backend URL
 	},
 	build: {
 		outDir: 'dist',
