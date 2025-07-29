@@ -10,7 +10,7 @@ A Vue.js client-side application for controlling LIFX smart lights through Claud
 - **Direct Light Control**: Manual control interface for immediate light adjustments
 - **Dynamic Backend Configuration**: Configure and switch between different backend servers at runtime
 - **Real-time Status**: Live monitoring of backend server connection and light status
-- **Time-Delimited Server Logs**: View backend and MCP server logs with configurable time frames (15 minutes, 1 hour, 4 hours)
+- **Enhanced Server Logs**: View backend and MCP server logs with intelligent JSON parsing, syntax highlighting, and time-based filtering
 - **Usage Tracking**: Session-based request tracking with visual indicators
 - **Secure API Handling**: Session-only storage of API keys with proper validation
 - **Responsive Design**: Mobile-friendly interface built with Quasar Framework
@@ -118,6 +118,23 @@ The application automatically uses the configured backend URL for all API reques
 
 ## 🔧 Recent Improvements
 
+### Enhanced Log Formatting (v1.3.0)
+
+**New Features**:
+
+- **Smart JSON Parser**: Automatically detects and parses multiple levels of JSON stringification
+- **Syntax Highlighting**: Color-coded display for JSON keys, values, timestamps, URLs, and log levels
+- **Improved Readability**: Complex nested JSON structures are properly formatted and indented
+- **Dark Theme Support**: All syntax highlighting adapts to light/dark themes
+- **Clean Copy**: When copying logs, HTML tags are automatically stripped for clean text output
+
+**Technical Implementation**:
+
+- New `logFormatter.js` utility with recursive JSON parsing
+- Enhanced CSS styling in `log-formatting.css` with comprehensive color schemes
+- Updated `ServerLogs.vue` component to render HTML-formatted logs
+- Maintains backward compatibility while significantly improving log readability
+
 ### Session ID Consistency Fix (v1.2.0)
 
 **Issue Resolved**: Fixed session ID inconsistency where different API requests were using different session IDs, causing backend session tracking problems.
@@ -140,25 +157,44 @@ The application automatically uses the configured backend URL for all API reques
    - **Manual Controls**: Direct light manipulation with sliders and color pickers
    - **Claude Chat**: Natural language commands like "Turn on the living room lights"
 
-### Server Logs
+### Enhanced Server Logs (v1.3.0)
 
-The **Combined Server Logs** component provides real-time access to backend and MCP server logs with time-based filtering:
+The **Combined Server Logs** component now features intelligent log formatting with syntax highlighting for improved readability:
 
-- **Time Frame Options**:
+**🎨 Visual Enhancements**:
 
-  - **Last 15 minutes**: Recent activity and errors (default)
-  - **Last 1 hour**: Extended troubleshooting view
-  - **Last 4 hours**: Comprehensive session logs
+- **Syntax Highlighting**: JSON keys, values, timestamps, and URLs are color-coded
+- **Smart JSON Parsing**: Automatically detects and unpacks nested stringified JSON (multiple levels)
+- **Log Level Badges**: Color-coded badges for ERROR (red), WARN (orange), INFO (blue), DEBUG (gray)
+- **Source Prefixes**: Distinct styling for `[BACKEND]` and `[MCP]` log sources
+- **Dark Theme Support**: All colors adapt to light/dark themes
 
-- **Features**:
-  - **Dropdown Selection**: Click the dropdown arrow on the refresh button to choose time frames
-  - **Automatic Refresh**: Logs automatically refresh when switching time frames
-  - **Combined View**: See both backend manager and LIFX MCP server logs in chronological order
-  - **Separate Views**: Individual tabs for backend and MCP logs
-  - **Copy Functionality**: Copy logs to clipboard for external analysis
-  - **Visual Indicators**: Shows selected time frame and entry counts
+**🔧 Processing Features**:
 
-This feature is particularly useful for troubleshooting issues without downloading excessive log data, similar to Railway's log filtering capabilities.
+- **Nested JSON Handling**: Intelligently parses complex log structures like:
+  ```json
+  {
+  	"output": "{\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"text\":\"{\\\"results\\\":[...]}\"}]}}"
+  }
+  ```
+  Into properly formatted, readable JSON with full syntax highlighting
+
+**📋 Time Frame Options**:
+
+- **Last 15 minutes**: Recent activity and errors (default)
+- **Last 1 hour**: Extended troubleshooting view
+- **Last 4 hours**: Comprehensive session logs
+
+**⚡ Additional Features**:
+
+- **Dropdown Selection**: Click the dropdown arrow on the refresh button to choose time frames
+- **Automatic Refresh**: Logs automatically refresh when switching time frames
+- **Combined View**: See both backend manager and LIFX MCP server logs in chronological order
+- **Separate Views**: Individual tabs for backend and MCP logs
+- **Copy Functionality**: Copy logs to clipboard (HTML tags automatically stripped for clean text)
+- **Visual Indicators**: Shows selected time frame and entry counts
+
+This enhancement significantly improves log readability, especially for complex MCP JSON-RPC responses and nested data structures.
 
 ### Example Commands
 
@@ -177,13 +213,17 @@ src/
 │   ├── TokenManager.vue      # API key management
 │   ├── ClaudeChat.vue        # Claude AI chat interface
 │   ├── LightControls.vue     # Manual light controls
-│   ├── ServerLogs.vue        # Time-delimited server logs viewer
+│   ├── ServerLogs.vue        # Enhanced server logs viewer with syntax highlighting
 │   └── UsageIndicator.vue    # Session usage display
 ├── composables/
 │   ├── useBackendApi.js      # Backend communication
 │   ├── useApiKeys.js         # API key management
-│   ├── useServerLogs.js      # Server logs fetching and management
+│   ├── useServerLogs.js      # Server logs fetching and formatting
 │   └── useSessionTracking.js # Usage tracking
+├── utils/
+│   └── logFormatter.js       # Smart JSON parsing and syntax highlighting utilities
+├── styles/
+│   └── log-formatting.css    # Syntax highlighting styles for logs
 └── App.vue                   # Main application
 ```
 

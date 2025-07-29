@@ -167,7 +167,11 @@
 								Click "Refresh Logs" to fetch server logs
 							</div>
 						</div>
-						<pre v-else class="log-content">{{ combinedLogsText }}</pre>
+						<div
+							v-else
+							class="enhanced-log-display"
+							v-html="combinedLogsText"
+						></div>
 					</q-scroll-area>
 					<div class="row q-gutter-sm q-mt-sm">
 						<q-btn
@@ -205,7 +209,11 @@
 								Backend manager logs will appear here
 							</div>
 						</div>
-						<pre v-else class="log-content">{{ backendLogsText }}</pre>
+						<div
+							v-else
+							class="enhanced-log-display"
+							v-html="backendLogsText"
+						></div>
 					</q-scroll-area>
 					<div class="row q-gutter-sm q-mt-sm">
 						<q-btn
@@ -243,7 +251,7 @@
 								LIFX MCP server process logs will appear here
 							</div>
 						</div>
-						<pre v-else class="log-content">{{ mcpLogsText }}</pre>
+						<div v-else class="enhanced-log-display" v-html="mcpLogsText"></div>
 					</q-scroll-area>
 					<div class="row q-gutter-sm q-mt-sm">
 						<q-btn
@@ -275,6 +283,9 @@
 	import { useServerLogs } from '../composables/useServerLogs';
 	import { useBackendApi } from '../composables/useBackendApi';
 
+	// Import CSS for log formatting
+	import '../styles/log-formatting.css';
+
 	const $q = useQuasar();
 	const { backendStatus, checkBackendHealth } = useBackendApi();
 	const {
@@ -287,7 +298,7 @@
 		fetchAllLogs,
 		getCombinedLogs,
 		copyLogsToClipboard,
-		formatLogEntry,
+		formatLogEntryEnhanced,
 	} = useServerLogs();
 
 	const activeTab = ref('combined');
@@ -313,37 +324,23 @@
 
 	const selectedTimeFrame = ref(timeFrameOptions[0]); // Default to 15 minutes
 
-	// Computed properties for formatted log text
+	// Computed properties for formatted log text with HTML rendering
 	const backendLogsText = computed(() => {
 		return backendLogs.value
-			.map(
-				(log) =>
-					`[${new Date(log.timestamp).toLocaleString()}] ${log.level
-						.toUpperCase()
-						.padEnd(5)} ${log.message}${
-						log.meta ? '\n' + JSON.stringify(log.meta, null, 2) : ''
-					}`
-			)
+			.map((log) => formatLogEntryEnhanced(log))
 			.join('\n\n');
 	});
 
 	const mcpLogsText = computed(() => {
-		return mcpLogs.value
-			.map(
-				(log) =>
-					`[${new Date(log.timestamp).toLocaleString()}] ${log.level
-						.toUpperCase()
-						.padEnd(5)} ${log.message}${
-						log.meta ? '\n' + JSON.stringify(log.meta, null, 2) : ''
-					}`
-			)
-			.join('\n\n');
+		return mcpLogs.value.map((log) => formatLogEntryEnhanced(log)).join('\n\n');
 	});
 
 	const combinedLogs = computed(() => getCombinedLogs());
 
 	const combinedLogsText = computed(() => {
-		return combinedLogs.value.map((log) => log.displayText).join('\n\n');
+		return combinedLogs.value
+			.map((log) => log.htmlContent || log.displayText)
+			.join('\n\n');
 	});
 
 	const hasLogs = computed(() => {

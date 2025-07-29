@@ -1,0 +1,197 @@
+/* Log formatting styles for syntax highlighting */
+
+/* Log source prefixes */
+.log-source {
+	font-weight: bold;
+	padding: 2px 6px;
+	border-radius: 3px;
+	font-size: 11px;
+	margin-right: 8px;
+}
+
+.log-source.backend {
+	color: #1976d2;
+	background-color: rgba(25, 118, 210, 0.1);
+}
+
+.log-source.mcp {
+	color: #7b1fa2;
+	background-color: rgba(123, 31, 162, 0.1);
+}
+
+/* Timestamp styling */
+.log-timestamp {
+	color: #666;
+	font-weight: normal;
+}
+
+/* Log level styling */
+.log-level {
+	font-weight: bold;
+	font-family: monospace;
+}
+
+.log-level-error {
+	color: #d32f2f;
+	background-color: rgba(211, 47, 47, 0.1);
+	padding: 1px 4px;
+	border-radius: 3px;
+}
+
+.log-level-warn {
+	color: #f57c00;
+	background-color: rgba(245, 124, 0, 0.1);
+	padding: 1px 4px;
+	border-radius: 3px;
+}
+
+.log-level-info {
+	color: #1976d2;
+	background-color: rgba(25, 118, 210, 0.1);
+	padding: 1px 4px;
+	border-radius: 3px;
+}
+
+.log-level-debug {
+	color: #666;
+	background-color: rgba(102, 102, 102, 0.1);
+	padding: 1px 4px;
+	border-radius: 3px;
+}
+
+/* Log message styling */
+.log-message {
+	color: #333;
+}
+
+/* JSON syntax highlighting */
+.json-key {
+	color: #0451a5;
+	font-weight: 500;
+}
+
+.json-string {
+	color: #032f62;
+}
+
+.json-number {
+	color: #098658;
+}
+
+.json-boolean {
+	color: #0000ff;
+	font-weight: bold;
+}
+
+.json-null {
+	color: #0000ff;
+	font-style: italic;
+}
+
+.json-undefined {
+	color: #808080;
+	font-style: italic;
+}
+
+.json-bracket {
+	color: #000;
+	font-weight: bold;
+}
+
+.json-colon {
+	color: #000;
+	margin: 0 4px;
+}
+
+/* Special JSON value types */
+.json-timestamp {
+	color: #7c4dff;
+	background-color: rgba(124, 77, 255, 0.1);
+	padding: 1px 3px;
+	border-radius: 2px;
+}
+
+.json-url {
+	color: #1976d2;
+	text-decoration: underline;
+}
+
+/* Raw log fallback */
+.log-raw {
+	color: #666;
+	font-family: monospace;
+	white-space: pre-wrap;
+}
+
+/* Enhanced log display container */
+.enhanced-log-display {
+	font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+	font-size: 12px;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	color: #333;
+	background-color: #fafafa;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	padding: 12px;
+	margin: 4px 0;
+}
+
+/* Dark theme support */
+.body--dark .enhanced-log-display {
+	background-color: #1e1e1e;
+	border-color: #333;
+	color: #d4d4d4;
+}
+
+.body--dark .log-source.backend {
+	color: #4fc1ff;
+	background-color: rgba(79, 193, 255, 0.2);
+}
+
+.body--dark .log-source.mcp {
+	color: #c586c0;
+	background-color: rgba(197, 134, 192, 0.2);
+}
+
+.body--dark .log-timestamp {
+	color: #9cdcfe;
+}
+
+.body--dark .log-message {
+	color: #d4d4d4;
+}
+
+.body--dark .json-key {
+	color: #9cdcfe;
+}
+
+.body--dark .json-string {
+	color: #ce9178;
+}
+
+.body--dark .json-number {
+	color: #b5cea8;
+}
+
+.body--dark .json-boolean {
+	color: #569cd6;
+}
+
+.body--dark .json-null {
+	color: #569cd6;
+}
+
+.body--dark .json-bracket {
+	color: #d4d4d4;
+}
+
+.body--dark .json-timestamp {
+	color: #c586c0;
+	background-color: rgba(197, 134, 192, 0.2);
+}
+
+.body--dark .json-url {
+	color: #4fc1ff;
+}

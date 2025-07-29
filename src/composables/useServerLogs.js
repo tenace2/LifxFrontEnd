@@ -1,6 +1,11 @@
 import { ref } from 'vue';
 import { useBackendApi } from './useBackendApi';
 import { useSessionTracking } from './useSessionTracking';
+import {
+	formatLogEntry,
+	formatRawLogOutput,
+	extractMcpInfo,
+} from '../utils/logFormatter';
 
 export function useServerLogs() {
 	const { makeApiRequest } = useBackendApi();
@@ -189,35 +194,49 @@ export function useServerLogs() {
 		}
 	};
 
-	// Format log entry for display
-	const formatLogEntry = (log) => {
-		const timestamp = new Date(log.timestamp).toLocaleString();
-		const level = log.level.toUpperCase().padEnd(5);
-		const message = log.message;
-		const meta = log.meta ? JSON.stringify(log.meta, null, 2) : '';
-
-		return `[${timestamp}] ${level} ${message}${meta ? '\n' + meta : ''}`;
+	// Format log entry for display with enhanced formatting
+	const formatLogEntryEnhanced = (log) => {
+		// Use the enhanced formatter
+		return formatLogEntry(log);
 	};
 
-	// Combine logs from both sources with timestamps
+	// Format raw log output (for complex nested JSON)
+	const formatRawLogEnhanced = (rawData) => {
+		return formatRawLogOutput(JSON.stringify(rawData));
+	};
+
+	// Combine logs from both sources with timestamps and enhanced formatting
 	const getCombinedLogs = () => {
 		const combined = [];
 
 		// Add backend logs with source prefix
 		backendLogs.value.forEach((log) => {
+			// Try to extract MCP info if it's an MCP-related log
+			const mcpInfo = extractMcpInfo(log);
+
 			combined.push({
 				...log,
 				source: 'backend',
-				displayText: `[BACKEND] ${formatLogEntry(log)}`,
+				displayText: `[BACKEND] ${formatLogEntryEnhanced(log)}`,
+				htmlContent: `<span class="log-source backend">[BACKEND]</span> ${formatLogEntryEnhanced(
+					log
+				)}`,
+				mcpInfo: mcpInfo,
 			});
 		});
 
 		// Add MCP logs with source prefix
 		mcpLogs.value.forEach((log) => {
+			const mcpInfo = extractMcpInfo(log);
+
 			combined.push({
 				...log,
 				source: 'mcp',
-				displayText: `[MCP] ${formatLogEntry(log)}`,
+				displayText: `[MCP] ${formatLogEntryEnhanced(log)}`,
+				htmlContent: `<span class="log-source mcp">[MCP]</span> ${formatLogEntryEnhanced(
+					log
+				)}`,
+				mcpInfo: mcpInfo,
 			});
 		});
 
@@ -234,15 +253,19 @@ export function useServerLogs() {
 		switch (source) {
 			case 'backend':
 				logs = backendLogs.value.map(
-					(log) => `[BACKEND] ${formatLogEntry(log)}`
+					(log) => `[BACKEND] ${formatLogEntry(log).replace(/<[^>]*>/g, '')}`
 				);
 				break;
 			case 'mcp':
-				logs = mcpLogs.value.map((log) => `[MCP] ${formatLogEntry(log)}`);
+				logs = mcpLogs.value.map(
+					(log) => `[MCP] ${formatLogEntry(log).replace(/<[^>]*>/g, '')}`
+				);
 				break;
 			case 'all':
 			default:
-				logs = getCombinedLogs().map((log) => log.displayText);
+				logs = getCombinedLogs().map((log) =>
+					log.displayText.replace(/<[^>]*>/g, '')
+				);
 				break;
 		}
 
@@ -283,7 +306,8 @@ export function useServerLogs() {
 		fetchLogsInfo,
 		getCombinedLogs,
 		copyLogsToClipboard,
-		formatLogEntry,
+		formatLogEntryEnhanced,
+		formatRawLogEnhanced,
 		getFormattedLogsText,
 	};
 }
