@@ -366,22 +366,50 @@
 
 					<!-- Claude Message -->
 					<div v-else class="claude-message">
+						<!-- Thinking Indicator for interim responses -->
+						<div v-if="message.isThinking" class="thinking-message q-mb-sm">
+							<q-chat-message
+								:text="['Claude is working on your request...']"
+								bg-color="blue-1"
+								text-color="blue-8"
+								:stamp="formatTimestamp(message.timestamp)"
+							>
+								<template v-slot:avatar>
+									<q-avatar color="blue-4" text-color="white">
+										<q-spinner color="white" size="20px" />
+									</q-avatar>
+								</template>
+							</q-chat-message>
+						</div>
+
+						<!-- Regular Claude Message -->
 						<q-chat-message
+							v-else
 							:text="[
 								typeof message.content === 'string'
 									? message.content
 									: JSON.stringify(message.content),
 							]"
-							bg-color="grey-3"
-							text-color="dark"
+							:bg-color="message.isInitial ? 'blue-2' : 'grey-3'"
+							:text-color="message.isInitial ? 'blue-9' : 'dark'"
 							:stamp="formatTimestamp(message.timestamp)"
 						>
 							<template v-slot:avatar>
 								<q-avatar
-									color="secondary"
+									:color="message.isInitial ? 'blue-5' : 'secondary'"
 									text-color="white"
-									icon="smart_toy"
+									:icon="message.isInitial ? 'psychology' : 'smart_toy'"
 								/>
+							</template>
+
+							<!-- Initial Response Badge -->
+							<template v-if="message.isInitial" v-slot:name>
+								<span class="text-caption text-blue-7">Initial Response</span>
+							</template>
+
+							<!-- Final Response Badge -->
+							<template v-if="message.isFinal" v-slot:name>
+								<span class="text-caption text-secondary">Final Response</span>
 							</template>
 						</q-chat-message>
 
@@ -1140,66 +1168,50 @@ Feel free to answer general questions about any topic. When users ask about ligh
 			updateUsageFromResponse(response);
 
 			if (response.data.success) {
-				// Ensure response content is a string
-				let responseContent = response.data.response;
+				// Extract initial and final responses
+				const initialResponse = response.data.initialResponse;
+				let finalResponseContent = response.data.response;
 
-				console.log('🔧 Response Content Analysis:', {
-					rawResponse: response.data.response,
-					type: typeof response.data.response,
-					isArray: Array.isArray(response.data.response),
-					isObject: typeof response.data.response === 'object',
-					keys:
-						typeof response.data.response === 'object'
-							? Object.keys(response.data.response || {})
-							: 'N/A',
-					// Log the actual object structure
-					fullObject: JSON.stringify(response.data.response, null, 2),
+				console.log('🔧 Response Analysis:', {
+					hasInitialResponse: !!initialResponse,
+					initialResponse: initialResponse,
+					finalResponse: finalResponseContent,
+					actions: response.data.actions || [],
 				});
 
-				// Handle different response formats
-				if (Array.isArray(responseContent)) {
-					// If it's an array, join the elements
-					responseContent = responseContent
-						.map((item) => {
-							if (typeof item === 'string') return item;
-							if (typeof item === 'object' && item !== null) {
-								return item.text || item.content || JSON.stringify(item);
-							}
-							return String(item);
-						})
-						.join(' ');
-				} else if (
-					typeof responseContent === 'object' &&
-					responseContent !== null
-				) {
-					// Handle Claude API response format specifically
-					if (
-						responseContent.content &&
-						Array.isArray(responseContent.content)
-					) {
-						// Claude API returns content as an array of content blocks
-						const textBlocks = responseContent.content
-							.filter((block) => block.type === 'text')
-							.map((block) => block.text);
+				// Helper function to extract text content from Claude response
+				const extractTextContent = (responseContent) => {
+					if (typeof responseContent === 'string') {
+						return responseContent;
+					}
 
-						if (textBlocks.length > 0) {
-							responseContent = textBlocks.join('\n');
-							console.log(
-								'🎯 Extracted Claude content from content array:',
-								responseContent
-							);
-						} else {
-							console.log(
-								'❌ No text blocks found in Claude content array:',
-								responseContent.content
-							);
-							responseContent = JSON.stringify(
-								responseContent.content,
-								null,
-								2
-							);
+					if (Array.isArray(responseContent)) {
+						return responseContent
+							.map((item) => {
+								if (typeof item === 'string') return item;
+								if (typeof item === 'object' && item !== null) {
+									return item.text || item.content || JSON.stringify(item);
+								}
+								return String(item);
+							})
+							.join(' ');
+					}
+
+					if (typeof responseContent === 'object' && responseContent !== null) {
+						// Handle Claude API response format specifically
+						if (
+							responseContent.content &&
+							Array.isArray(responseContent.content)
+						) {
+							const textBlocks = responseContent.content
+								.filter((block) => block.type === 'text')
+								.map((block) => block.text);
+
+							if (textBlocks.length > 0) {
+								return textBlocks.join('\n');
+							}
 						}
-					} else {
+
 						// Fallback: try to extract text content from common properties
 						const possibleTextKeys = [
 							'text',
@@ -1211,72 +1223,84 @@ Feel free to answer general questions about any topic. When users ask about ligh
 							'output',
 							'result',
 						];
-						let foundText = null;
 
-						// Try each possible key
 						for (const key of possibleTextKeys) {
 							if (
 								responseContent[key] &&
 								typeof responseContent[key] === 'string'
 							) {
-								foundText = responseContent[key];
-								console.log(
-									`🎯 Found text content in property '${key}':`,
-									foundText
-								);
-								break;
+								return responseContent[key];
 							}
 						}
 
-						if (foundText) {
-							responseContent = foundText;
-						} else {
-							// If no text property found, log all properties and use JSON
-							console.log(
-								'❌ No text property found in object. Available properties:',
-								Object.keys(responseContent)
-							);
-							console.log('📄 Full object structure:', responseContent);
-							responseContent = JSON.stringify(responseContent, null, 2);
-						}
+						return JSON.stringify(responseContent, null, 2);
 					}
-				} else if (responseContent === null || responseContent === undefined) {
-					responseContent = 'No response received from Claude';
-				} else if (typeof responseContent !== 'string') {
-					responseContent = String(responseContent);
-				}
 
-				// Final safety check - make sure it's really a string
-				if (typeof responseContent !== 'string') {
-					console.log(
-						'⚠️ Content is still not a string after processing:',
-						typeof responseContent,
-						responseContent
-					);
-					responseContent = String(responseContent);
-				}
-
-				console.log('📝 Final Processed Content:', {
-					finalContent: responseContent,
-					finalType: typeof responseContent,
-					finalLength: responseContent.length,
-				});
-
-				const claudeMessage = {
-					role: 'assistant',
-					content: responseContent,
-					timestamp: Date.now(),
-					actions: response.data.actions || [],
+					return String(responseContent || 'No response received from Claude');
 				};
-				messages.value.push(claudeMessage);
 
-				console.log('💬 Message added to chat:', {
-					role: claudeMessage.role,
-					contentType: typeof claudeMessage.content,
-					contentLength: claudeMessage.content.length,
-					actionsCount: claudeMessage.actions.length,
-					timestamp: new Date(claudeMessage.timestamp).toLocaleString(),
-				});
+				// Process final response content
+				finalResponseContent = extractTextContent(finalResponseContent);
+
+				// Handle initial response if present
+				if (initialResponse && initialResponse.trim()) {
+					console.log('� Displaying initial Claude response:', initialResponse);
+
+					// Add initial message immediately
+					const initialMessage = {
+						role: 'assistant',
+						content: initialResponse,
+						timestamp: Date.now(),
+						isInitial: true,
+					};
+					messages.value.push(initialMessage);
+
+					// Add thinking indicator
+					const thinkingMessage = {
+						role: 'assistant',
+						content: '',
+						timestamp: Date.now() + 1,
+						isThinking: true,
+					};
+					messages.value.push(thinkingMessage);
+
+					// Wait, then remove thinking indicator and show final response
+					setTimeout(() => {
+						// Remove thinking indicator
+						const thinkingIndex = messages.value.findIndex((m) => m.isThinking);
+						if (thinkingIndex !== -1) {
+							messages.value.splice(thinkingIndex, 1);
+						}
+
+						// Add final response
+						const finalMessage = {
+							role: 'assistant',
+							content: finalResponseContent,
+							timestamp: Date.now(),
+							actions: response.data.actions || [],
+							isFinal: true,
+						};
+						messages.value.push(finalMessage);
+
+						console.log('💬 Final message added to chat:', {
+							contentLength: finalMessage.content.length,
+							actionsCount: finalMessage.actions.length,
+						});
+					}, 2000); // 2 second delay for thinking
+				} else {
+					// No initial response, just show final response with current behavior
+					console.log('📝 No initial response, showing final response only');
+
+					const claudeMessage = {
+						role: 'assistant',
+						content: finalResponseContent,
+						timestamp: Date.now(),
+						actions: response.data.actions || [],
+					};
+					messages.value.push(claudeMessage);
+				}
+
+				console.log('💬 Response processing complete');
 			} else {
 				throw new Error(response.data.error || 'Claude request failed');
 			}
@@ -1411,6 +1435,27 @@ Feel free to answer general questions about any topic. When users ask about ligh
 		display: flex;
 		justify-content: flex-start;
 		flex-direction: column;
+	}
+
+	.thinking-message {
+		opacity: 0.8;
+	}
+
+	.thinking-message .q-message {
+		background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
+		border-left: 3px solid #2196f3;
+	}
+
+	/* Initial response styling */
+	.q-message[data-bg-color='blue-2'] {
+		border-left: 3px solid #1976d2;
+		box-shadow: 0 1px 3px rgba(25, 118, 210, 0.2);
+	}
+
+	/* Final response styling */
+	.q-message[data-bg-color='grey-3'] {
+		border-left: 3px solid #4caf50;
+		box-shadow: 0 1px 3px rgba(76, 175, 80, 0.1);
 	}
 
 	.error-message {
