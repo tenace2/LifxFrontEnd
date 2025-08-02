@@ -47,11 +47,13 @@
 										would not necesarily respond to lighting control requests.
 										Note that you can get some very odd behavior if you disable
 										the Strict guardrails. The General prompt can possibly allow
-										for <i>random misinterpretations</i> of your chats, such an
-										off topic chat "Please make be bacon and eggs" can result in
-										the "on" in "bacon" being parsed out and turning your lights
-										on. But you can also ask for "I need a recipe for potato
-										salad, oh, and also turn my lights blue".
+										for <i>random misinterpretations</i> of your chats, such as
+										off topic chat "Please make me bacon and eggs" can result in
+										the "on" in "bacon" being parsed out as separate tokens and
+										turning your lights on. But you can also ask for "I need a
+										recipe for potato salad, oh, and also turn my lights blue",
+										and you can get both! Claude will then respond with a recipe
+										for potato salad and turn your lights blue.
 									</div>
 
 									<!-- Cost Impact -->
