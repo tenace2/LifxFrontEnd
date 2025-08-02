@@ -248,7 +248,7 @@
 					<div class="q-mb-md">
 						<q-input
 							v-model.number="maxTokens"
-							label="Max Tokens"
+							label="Output Token Limit"
 							type="number"
 							:min="100"
 							:max="4000"
@@ -275,7 +275,21 @@
 									<div class="text-h6 text-primary">
 										{{ estimatedTokens }}
 									</div>
-									<div class="text-caption text-grey-6">Total Tokens</div>
+									<div class="text-caption text-grey-6">
+										{{
+											actualTokenUsage.total_requests > 0
+												? 'Actual Tokens'
+												: 'Est. Tokens'
+										}}
+									</div>
+									<!-- Show breakdown if we have actual data -->
+									<div
+										v-if="actualTokenUsage.total_requests > 0"
+										class="text-caption text-grey-5 q-mt-xs"
+									>
+										In: {{ actualTokenUsage.input_tokens }} | Out:
+										{{ actualTokenUsage.output_tokens }}
+									</div>
 								</q-card>
 							</div>
 							<div class="col">
@@ -283,7 +297,13 @@
 									<div class="text-h6 text-positive">
 										${{ estimatedCost.toFixed(4) }}
 									</div>
-									<div class="text-caption text-grey-6">Est. Cost</div>
+									<div class="text-caption text-grey-6">
+										{{
+											actualTokenUsage.total_requests > 0
+												? 'Actual Cost'
+												: 'Est. Cost'
+										}}
+									</div>
 								</q-card>
 							</div>
 							<div class="col">
@@ -301,7 +321,21 @@
 									<div class="text-h6 text-primary">
 										{{ estimatedTokens }}
 									</div>
-									<div class="text-caption text-grey-6">Total Tokens</div>
+									<div class="text-caption text-grey-6">
+										{{
+											actualTokenUsage.total_requests > 0
+												? 'Actual Tokens'
+												: 'Est. Tokens'
+										}}
+									</div>
+									<!-- Show breakdown if we have actual data -->
+									<div
+										v-if="actualTokenUsage.total_requests > 0"
+										class="text-caption text-grey-5 q-mt-xs"
+									>
+										In: {{ actualTokenUsage.input_tokens }} | Out:
+										{{ actualTokenUsage.output_tokens }}
+									</div>
 								</q-card>
 							</div>
 							<div class="q-mb-sm">
@@ -309,7 +343,13 @@
 									<div class="text-h6 text-positive">
 										${{ estimatedCost.toFixed(4) }}
 									</div>
-									<div class="text-caption text-grey-6">Est. Cost</div>
+									<div class="text-caption text-grey-6">
+										{{
+											actualTokenUsage.total_requests > 0
+												? 'Actual Cost'
+												: 'Est. Cost'
+										}}
+									</div>
 								</q-card>
 							</div>
 							<div class="q-mb-sm">
@@ -547,6 +587,13 @@
 
 	// Token Statistics visibility state
 	const showTokenStats = ref(false);
+
+	// Track actual token usage from Claude API responses
+	const actualTokenUsage = ref({
+		input_tokens: 0,
+		output_tokens: 0,
+		total_requests: 0,
+	});
 
 	// System prompt text constant
 	const systemPromptText = `You are a comprehensive LIFX smart lighting assistant with access to the full LIFX API. You can control lights, create effects, manage scenes, and perform advanced lighting operations.
@@ -841,16 +888,41 @@ Feel free to answer general questions about any topic. When users ask about ligh
 	});
 
 	const estimatedTokens = computed(() => {
-		// Rough estimate: ~4 characters per token
+		// If we have actual usage data from Claude API, use that
+		if (actualTokenUsage.value.total_requests > 0) {
+			return (
+				actualTokenUsage.value.input_tokens +
+				actualTokenUsage.value.output_tokens
+			);
+		}
+
+		// Otherwise, fall back to rough estimates for preview
 		const messageTokens = Math.ceil(currentMessage.value.length / 4);
 		const contextTokens = messages.value.reduce((sum, msg) => {
 			return sum + Math.ceil(msg.content.length / 4);
 		}, 0);
-		return messageTokens + contextTokens + 100; // Add system prompt tokens
+
+		// Only add system prompt tokens if:
+		// 1. System prompt is enabled AND
+		// 2. User is actively typing a message OR there are existing messages
+		const hasActiveContent =
+			currentMessage.value.trim().length > 0 || messages.value.length > 0;
+		const systemPromptTokens =
+			systemPromptEnabled.value && hasActiveContent ? 100 : 0;
+
+		return messageTokens + contextTokens + systemPromptTokens;
 	});
 
 	const estimatedCost = computed(() => {
-		// Claude pricing (approximate): $0.008 per 1K tokens
+		// If we have actual usage data, calculate precise cost
+		if (actualTokenUsage.value.total_requests > 0) {
+			// Claude pricing: $0.003 per 1K input tokens, $0.015 per 1K output tokens
+			const inputCost = (actualTokenUsage.value.input_tokens / 1000) * 0.003;
+			const outputCost = (actualTokenUsage.value.output_tokens / 1000) * 0.015;
+			return inputCost + outputCost;
+		}
+
+		// Otherwise, use rough estimate with blended rate
 		return (estimatedTokens.value / 1000) * 0.008;
 	});
 
@@ -1070,6 +1142,37 @@ Feel free to answer general questions about any topic. When users ask about ligh
 	};
 
 	// ===========================================
+	// TOKEN USAGE TRACKING
+	// ===========================================
+
+	const updateActualTokenUsage = (claudeUsageData) => {
+		if (claudeUsageData && typeof claudeUsageData === 'object') {
+			console.log('🎯 ACTUAL TOKEN USAGE from Claude API:', claudeUsageData);
+
+			// Accumulate token usage across multiple requests
+			actualTokenUsage.value.input_tokens += claudeUsageData.input_tokens || 0;
+			actualTokenUsage.value.output_tokens +=
+				claudeUsageData.output_tokens || 0;
+			actualTokenUsage.value.total_requests += 1;
+
+			console.log('📊 UPDATED TOTAL TOKEN USAGE:', {
+				input_tokens: actualTokenUsage.value.input_tokens,
+				output_tokens: actualTokenUsage.value.output_tokens,
+				total_tokens:
+					actualTokenUsage.value.input_tokens +
+					actualTokenUsage.value.output_tokens,
+				total_requests: actualTokenUsage.value.total_requests,
+				this_request: claudeUsageData,
+			});
+		} else {
+			console.log(
+				'⚠️ No valid usage data in Claude response:',
+				claudeUsageData
+			);
+		}
+	};
+
+	// ===========================================
 	// MESSAGE HANDLING
 	// ===========================================
 
@@ -1166,6 +1269,11 @@ Feel free to answer general questions about any topic. When users ask about ligh
 				),
 				usage: response.data.usage || 'No usage data',
 			});
+
+			// Update actual token usage if available
+			if (response.data.usage) {
+				updateActualTokenUsage(response.data.usage);
+			}
 
 			updateUsageFromResponse(response);
 
@@ -1356,9 +1464,15 @@ Feel free to answer general questions about any topic. When users ask about ligh
 			persistent: true,
 		}).onOk(() => {
 			messages.value = [];
+			// Reset actual token usage tracking
+			actualTokenUsage.value = {
+				input_tokens: 0,
+				output_tokens: 0,
+				total_requests: 0,
+			};
 			$q.notify({
 				type: 'info',
-				message: 'Chat history cleared',
+				message: 'Chat history and token usage cleared',
 				timeout: 2000,
 			});
 		});
