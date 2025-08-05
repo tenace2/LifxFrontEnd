@@ -44,6 +44,22 @@
 					</template>
 				</q-banner>
 
+				<!-- App Information Link -->
+				<q-banner class="q-mb-md bg-info text-white">
+					<template v-slot:avatar>
+						<q-icon name="info" />
+					</template>
+					<strong>Link to app information:</strong>
+					<a
+						href="https://my-digital-garden-vercel-orpin.vercel.app/upgraded-claude-ai-mcp-lifx/lifx-mcp-server-with-claude-chat-on-railway/"
+						target="_blank"
+						class="text-white q-ml-sm"
+						style="text-decoration: underline"
+					>
+						LIFX MCP Server with Claude Chat Guide
+					</a>
+				</q-banner>
+
 				<!-- Server Logs & Debug Info -->
 				<ServerLogs class="q-mb-md" />
 
